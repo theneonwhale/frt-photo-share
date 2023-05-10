@@ -6,7 +6,6 @@ from src.conf.messages import WELCOME
 
 
 app = FastAPI()
-
 # app.include_router(pictures.router, prefix='/api')
 
 
