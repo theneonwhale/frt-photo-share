@@ -4,17 +4,19 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, func, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-
 Base = declarative_base()
 
 
 class TransformationsType(enum.Enum):
     basic: str = 'basic'
     avatar: str = 'avatar'
-    gray: str = 'gray'
-    cartoon: str = 'cartoon'
+    black_white: str = 'black_white'
+    delete_bg: str = 'delete_bg'
+    cartoonify: str = 'cartoonify'
+    oil_paint: str = 'oil_paint'
     sepia: str = 'sepia'
-    old: str = 'old'
+    vector: str = 'vector'
+    outline: str = 'outline'
 
 
 class User(Base):
