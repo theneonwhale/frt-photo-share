@@ -1,7 +1,12 @@
 WELCOME = 'Welcome to Photo-Share by Fast Rabbit Team.'
 TOKEN_TYPE = 'bearer'
 WELCOME_FASTAPI = 'Welcome to FastAPI!'
+MSC400_BAD_REQUEST = 'Verification error'
 MSC500_DATABASE_CONFIG = 'Database is not configured correctly.'
 MSC500_DATABASE_CONNECT = 'Error connecting to the database.'
 MSC201_USER_CREATED = 'User successfully created'
 MSC403_FORBIDDEN = 'Operation forbidden'
+MSC422_EMAIL_VERIFICATION = 'Invalid token for email verification'
+EMAIL_ERROR_CONFIRMED = 'Your email is already confirmed'
+EMAIL_INFO_CONFIRMED = 'Check your email for confirmation.'
+EMAIL_INFO_CONFIRM = "Email confirmed"
