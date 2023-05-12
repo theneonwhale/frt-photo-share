@@ -31,7 +31,8 @@ class User(Base):
     confirmed = Column(Boolean, default=False)  # whether the user's email was confirmed
 
 
-class TransformationsType(enum.Enum):
+class TransformationsTyp(enum.Enum):
+    #TODO рпоблема міграціі, видалив "е" повернути
     basic: str = 'basic'
     avatar: str = 'avatar'
     black_white: str = 'black_white'
@@ -55,7 +56,7 @@ class Image(Base):
     __tablename__ = 'images'
     id = Column(Integer, primary_key=True, index=True)
     description = Column(String, nullable=True)
-    type = Column('TransformationsType', Enum(TransformationsType), default=TransformationsType.basic)
+    type = Column('TransformationsType', Enum(TransformationsTyp), default=TransformationsTyp.basic)
     link = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     user = relationship('User', backref="images")
