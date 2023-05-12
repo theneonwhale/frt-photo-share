@@ -55,14 +55,14 @@ class AuthToken:
     async def create_email_token(self, data: dict):
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(hours=1)
-        to_encode.update({"iat": datetime.utcnow(), "exp": expire})
+        to_encode.update({'iat': datetime.utcnow(), 'exp': expire})
         token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
         return token
 
     async def get_email_from_token(self, token: str):
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            email = payload["sub"]
+            email = payload['sub']
             return email
         except JWTError as e:
             print(e)
@@ -82,16 +82,34 @@ class AuthToken:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_CREDENTIALS)
 
         return email
+    
+    async def create_password_reset_token(self, data: dict, expires_delta: Optional[float] = None):
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + timedelta(seconds=expires_delta)
+
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=25)
+
+        to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'password_reset_token'})
+        encoded_password_reset_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+
+        return encoded_password_reset_token
 
 
 class AuthUser(AuthToken):
-    r = redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0, password=settings.redis_password)
+    redis_client = redis.Redis(
+                               host=settings.redis_host, 
+                               port=settings.redis_port, 
+                               db=0, 
+                               password=settings.redis_password
+                               )
 
     async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Could not validate credentials',
-            headers={'WWW-Authenticate': 'Bearer'},
+            detail=MSC401_CREDENTIALS,
+            headers={'WWW-Authenticate': TOKEN_TYPE},  # 'Bearer'
         )
 
         try:
@@ -104,7 +122,7 @@ class AuthUser(AuthToken):
                 raise credentials_exception
         except:
             raise credentials_exception
-        user = self.r.get(email)
+        user = self.redis_client.get(email)
         if user is None:
             user = await repository_users.get_user_by_email(email, db)
             user = {'id': user.id,
@@ -116,8 +134,8 @@ class AuthUser(AuthToken):
             json_user = json.dumps(user)
             if user is None:
                 raise credentials_exception
-            self.r.set(email, user)
-            self.r.expire(email, 60)
+            self.redis_client.set(email, user)
+            self.redis_client.expire(email, 60)
         else:
             user = json.loads(user)
         return user
