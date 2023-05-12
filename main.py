@@ -27,7 +27,7 @@ def healthchecker(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONNECT)
 
         
- @app.get('/')
+@app.get('/')
 def read_root():
     return {'message': WELCOME}
 
