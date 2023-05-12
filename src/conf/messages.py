@@ -1,2 +1,5 @@
 WELCOME = 'Welcome to Photo-Share by Fast Rabbit Team.'
 TOKEN_TYPE = 'bearer'
+WELCOME_FASTAPI = 'Welcome to FastAPI!'
+MSC500_DATABASE_CONFIG = 'Database is not configured correctly.'
+MSC500_DATABASE_CONNECT = 'Error connecting to the database.'

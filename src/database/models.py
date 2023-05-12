@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base  # ?!
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
 
-# from src.database.db_connect import Base
+# from src.database.db import Base
 Base = declarative_base()
 
 
@@ -24,7 +24,7 @@ class User(Base):
     email = Column(String(30), nullable=False, unique=True)
     password = Column(String(255), nullable=False)  # not 10, because store hash, not password
     created_at = Column('crated_at', DateTime, default=func.now())
-    updated_at = Column('updated_at', DateTime, default=func.now())  # !
+    updated_at = Column('updated_at', DateTime, default=func.now(), onupdate=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
     roles = Column('roles', Enum(Role), default=Role.user)
