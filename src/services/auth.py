@@ -69,6 +69,20 @@ class AuthToken:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=MSC422_EMAIL_VERIFICATION)
 
+    async def refresh_token_email(self, refresh_token: str = Depends(oauth2_scheme)):
+        try:
+            payload = jwt.decode(refresh_token, self.SECRET_KEY, self.ALGORITHM)
+            if payload['scope'] == 'refresh_token':
+                email = payload['sub']
+                if email is None:
+                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
+            else:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN_SCOPE)
+        except:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_CREDENTIALS)
+
+        return email
+
 
 class AuthUser(AuthToken):
     r = redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0, password=settings.redis_password)
