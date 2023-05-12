@@ -8,11 +8,14 @@ import uvicorn
 from src.conf.messages import *
 from src.database.db import get_db
 # from src.routes import pictures
+from src.routes import auth
+
 
 
 app = FastAPI()
-# app.include_router(pictures.router, prefix='/api')
 
+app.include_router(auth.router, prefix='/api')
+# app.include_router(pictures.router, prefix='/api')
 
 @app.get('/api/healthchecker')
 def healthchecker(db: Session = Depends(get_db)):
@@ -26,10 +29,11 @@ def healthchecker(db: Session = Depends(get_db)):
         print(e)
         raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONNECT)
 
-        
+
 @app.get('/')
 def read_root():
     return {'message': WELCOME}
+
 
 
 if __name__ == '__main__':

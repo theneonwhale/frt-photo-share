@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mail_port: int = 465
     mail_server: str = 'smtp.meta.ua'
     redis_host: str = 'localhost'
+    redis_password: str = 'password'
     redis_port: int = 6379
     cloudinary_name: str = 'name'
     cloudinary_api_key: int = 1
