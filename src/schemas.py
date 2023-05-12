@@ -1,14 +1,37 @@
+from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr
 from typing import List
-from pydantic import BaseModel, Field
+
+from src.conf.messages import MSC201_USER_CREATED
 
 
 class UserModel(BaseModel):
+    """User model class."""
+    id: int  # = 0
+    username: str = Field(min_length=2, max_length=30)
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=14)
+
+
+class UserDb(BaseModel):
+    """Class User for DataBase."""
     id: int
-    # TODO
+    username: str
+    email: str
+    created_at: datetime
+    avatar: str
+
+    class Config:
+        """Indicates that the UserDb model is used to represent the ORM model."""
+        orm_mode = True
 
 
 class UserResponse(UserModel):
+    """User response class."""
     id: int
+    user: UserDb
+    detail: str = MSC201_USER_CREATED
+    
 
     class Config:
         orm_mode = True

@@ -22,7 +22,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(50))
     email = Column(String(30), nullable=False, unique=True)
-    password = Column(String(255), nullable=False)  # not 10, because store hash, not password
+    password = Column(String(255), nullable=False)  # not 14, because store hash, not password
     created_at = Column('crated_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now(), onupdate=func.now())
     avatar = Column(String(255), nullable=True)
