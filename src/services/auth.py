@@ -2,15 +2,15 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import HTTPException, Depends, status
-from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
 import redis
+from sqlalchemy.orm import Session
 
 from src.conf.config import settings
 from src.database.db import get_db
-from src.repository import user as repository_user
+from src.repository import users as repository_users
 
 
 class AuthPassword:
