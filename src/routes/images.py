@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status, Path
 from fastapi_limiter.depends import RateLimiter
-from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination
+from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -29,8 +29,8 @@ security = HTTPBearer()
             )
 async def get_images(
                        db: Session = Depends(get_db), 
-                       credentials: HTTPAuthorizationCredentials = Security(security),
                        current_user: User = Depends(authuser.get_current_user),
+                       credentials: HTTPAuthorizationCredentials = Security(security),
                        pagination_params: Params = Depends()
                        ) -> Page:
  
@@ -48,7 +48,8 @@ async def get_images(
 async def get_image(
                     image_id: int = Path(ge=1),
                     db: Session = Depends(get_db),
-                    current_user: User = Depends(authuser.get_current_user)
+                    current_user: User = Depends(authuser.get_current_user),
+                    credentials: HTTPAuthorizationCredentials = Security(security)
                     ) -> Optional[Image]:
 
     image = await repository_images.get_image(image_id, current_user, db)
@@ -67,7 +68,8 @@ async def get_image(
 async def remove_image(
                        image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
-                       current_user: User = Depends(authuser.get_current_user)
+                       current_user: User = Depends(authuser.get_current_user),
+                       credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Optional[Image]:
 
     image = await repository_images.remove_image(image_id, current_user, db)

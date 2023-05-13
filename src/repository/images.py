@@ -17,11 +17,9 @@ async def get_images(
                      db: Session,  # pagination_params: Page
                      pagination_params: Params
                      ) -> Page:
-    # if user:
+    # if user:    # .filter(Image.user_id == user.id)    # Image.updated_at & schemas...
     return paginate(
-                    query=db.query(Image)
-                    # .filter(Image.user_id == user.id)
-                    .order_by(Image.user_id),  # Image.updated_at & schemas...
+                    query=db.query(Image).order_by(Image.user_id),
                     params=pagination_params
                     )
 
