@@ -32,6 +32,7 @@ def get_db():
 
 def get_redis():
     try:
+        print(f'\n\t\t________________settings.redis_password={settings.redis_password}\n')
         if settings.redis_password:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
@@ -39,16 +40,19 @@ def get_redis():
                                     db=0, 
                                     password=settings.redis_password
                                     )
-        else:
+        elif settings.redis_password == '0' or not settings.redis_password:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
                                     db=0
                                     )
+            
     except AuthenticationError as error:
-        print(error)
+        redis_client = None
+        print(f'Authentication failed to connect to redis\n{error}')
         
     except Exception as error:
+        redis_client = None
         print(f'Unable to connect to redis\n{error}')
 
-    return redis_client
+    return redis_client if redis_client else None

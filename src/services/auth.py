@@ -34,22 +34,26 @@ class AuthToken:
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + timedelta(expires_delta)
+            
         else:
             expire = datetime.utcnow() + timedelta(hours=1)
 
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'access_token'})
         access_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
+
         return access_token
 
     async def create_refresh_token(self, data: dict, expires_delta: Optional[float] = None):
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + timedelta(expires_delta)
+
         else:
             expire = datetime.utcnow() + timedelta(days=7)
 
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'refresh_token'})
         refresh_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
+
         return refresh_token
 
     async def create_email_token(self, data: dict):
@@ -57,13 +61,16 @@ class AuthToken:
         expire = datetime.utcnow() + timedelta(hours=1)
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire})
         token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
+
         return token
 
     async def get_email_from_token(self, token: str):
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             email = payload['sub']
+
             return email
+        
         except JWTError as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -78,6 +85,7 @@ class AuthToken:
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
             else:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN_SCOPE)
+            
         except:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_CREDENTIALS)
 
@@ -99,12 +107,6 @@ class AuthToken:
 
 class AuthUser(AuthToken):
     redis_client = get_redis()
-    # redis_client = redis.Redis(
-    #                            host=settings.redis_host, 
-    #                            port=settings.redis_port, 
-    #                            db=0, 
-    #                            password=settings.redis_password
-    #                            )
 
     async def get_current_user(self, token: OAuth2PasswordBearer = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
@@ -121,9 +123,12 @@ class AuthUser(AuthToken):
                     raise credentials_exception
             else:
                 raise credentials_exception
+            
         except:
             raise credentials_exception
-        user = self.redis_client.get(email)
+        
+        user = self.redis_client.get(email) if self.redis_client else None
+
         if user is None:
             user = await repository_users.get_user_by_email(email, db)
             user = {'id': user.id,
@@ -135,8 +140,11 @@ class AuthUser(AuthToken):
             json_user = json.dumps(user)
             if user is None:
                 raise credentials_exception
-            self.redis_client.set(email, user)
-            self.redis_client.expire(email, 60)
+            
+            self.redis_client.set(email, user) if self.redis_client else None
+            self.redis_client.expire(email, 60) if self.redis_client else None
+
         else:
             user = json.loads(user)
+
         return user
