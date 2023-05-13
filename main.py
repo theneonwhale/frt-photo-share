@@ -58,3 +58,7 @@ if __name__ == '__main__':
 # alembic init migrations
 # alembic revision --autogenerate -m 'Init'
 # alembic upgrade head
+
+# http://0.0.0.0:8000
+# http://0.0.0.0:8000/docs#
+# http://0.0.0.0:8000/api/healthchecker
