@@ -38,3 +38,19 @@ async def get_image(
             .filter_by(id=image_id)
             .first()
             )
+
+
+async def remove_image(
+                       image_id: int,
+                       user: User,  # !
+                       db: Session
+                       ) -> Optional[Image]:
+
+    # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
+    # if user.id == Image.user_id or user.rile ...
+    image = db.query(Image).filter_by(id=image_id).first()
+    if image:
+        db.delete(image)
+        db.commit()
+
+    return image
