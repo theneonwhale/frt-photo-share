@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     mail_from: str = 'example@meta.ua'
     mail_port: int = 465
     mail_server: str = 'smtp.meta.ua'
+    mail_from_name: str = 'sender: app photo-share'
     redis_host: str = 'localhost'
     redis_password: str = 'password'
     redis_port: int = 6379
