@@ -28,7 +28,7 @@ class AuthPassword:
 class AuthToken:
     SECRET_KEY = settings.secret_key
     ALGORITHM = settings.algorithm
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
+    oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
 
     async def create_access_token(self, data: dict, expires_delta: Optional[float] = None):
         to_encode = data.copy()
@@ -105,7 +105,7 @@ class AuthUser(AuthToken):
                                password=settings.redis_password
                                )
 
-    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
+    async def get_current_user(self, token: OAuth2PasswordBearer = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=MSC401_CREDENTIALS,

@@ -1,5 +1,5 @@
 WELCOME = 'Welcome to Photo-Share by Fast Rabbit Team.'
-TOKEN_TYPE = 'bearer'
+TOKEN_TYPE = 'Bearer'
 WELCOME_FASTAPI = 'Welcome to FastAPI!'
 MSC400_BAD_REQUEST = 'Verification error.'
 MSC401_EMAIL = 'Invalid email.'
