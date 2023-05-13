@@ -1,8 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, Security, status, Path
 from fastapi_limiter.depends import RateLimiter
 from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
@@ -16,6 +17,8 @@ from src.services.auth import AuthUser
 
 router = APIRouter(prefix='/images')  # tags=['images']
 authuser = AuthUser()
+security = HTTPBearer()
+
 
 # https://pypi.org/project/python-redis-rate-limit/
 @router.get(
@@ -26,6 +29,7 @@ authuser = AuthUser()
             )
 async def get_images(
                        db: Session = Depends(get_db), 
+                       credentials: HTTPAuthorizationCredentials = Security(security),
                        current_user: User = Depends(authuser.get_current_user),
                        pagination_params: Params = Depends()
                        ) -> Page:

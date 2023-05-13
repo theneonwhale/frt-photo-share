@@ -73,13 +73,14 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
     email = await authtoken.refresh_token_email(token)
     user = await repository_users.get_user_by_email(email, db)
     if user.refresh_token != token:
+        print(f'\n\n{user.refresh_token}\n{token}\n\n')
         await repository_users.update_token(user, None, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN)
 
     access_token = await authtoken.create_access_token(data={'sub': email})
     refresh_token = await authtoken.create_refresh_token(data={'sub': email})
     await repository_users.update_token(user, refresh_token, db)
-    
+
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
@@ -154,14 +155,14 @@ async def reset_password_confirm(
     exist_user = await repository_users.get_user_by_email(email, db)
     if not exist_user:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=MSC401_EMAIL_UNKNOWN)
+                            detail=MSC503_UNKNOWN_USER)
     
     body.password = authpassword.get_hash_password(body.password)
     
     updated_user = await repository_users.change_password_for_user(exist_user, body.password, db)
     if updated_user is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=MSC401_EMAIL_UNKNOWN)
+                            detail=MSC503_UNKNOWN_USER)
 
     # request.base_url ->  http://127.0.0.1:8000/
     background_tasks.add_task(send_email, updated_user.email, updated_user.username, request.base_url)  
