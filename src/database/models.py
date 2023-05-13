@@ -53,7 +53,7 @@ image_m2m_tag = Table('image_m2m_tag',
 
 class Image(Base):
     __tablename__ = 'images'
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     description = Column(String, nullable=True)
     type = Column('TransformationsType', Enum(TransformationsType), default=TransformationsType.basic)
     link = Column(String, nullable=False)
@@ -66,17 +66,17 @@ class Image(Base):
 
 class Tag(Base):
     __tablename__ = 'tags'
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(20), nullable=False, unique=True)
 
 
 class Comment(Base):
     __tablename__ = 'comments'
     id = Column(Integer, primary_key=True)
-    comment = Column(String(2000), nullable=True)  # set unlimited? 
+    comment = Column(String(2000))  # set unlimited? nullable=True
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     user = relationship('User', backref="comments")
-    image_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    image_id = Column(Integer, ForeignKey('images.id', ondelete='CASCADE'), nullable=True)
     image = relationship('Image', backref="comments")
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

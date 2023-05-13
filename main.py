@@ -10,7 +10,7 @@ import uvicorn
 
 from src.conf.config import settings
 from src.conf.messages import *
-from src.database.db import get_db, get_redis
+from src.database.db import get_db, get_async_redis
 from src.routes import images
 from src.routes import auth
 
@@ -22,7 +22,7 @@ app.include_router(images.router, prefix='/api')
 
 @app.on_event('startup')
 async def startup():
-    await FastAPILimiter.init(get_redis())
+    await FastAPILimiter.init(get_async_redis())
 
 
 @app.get('/api/healthchecker')

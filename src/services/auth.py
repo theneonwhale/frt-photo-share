@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-import json
+import pickle  # json
 from typing import Optional
 
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-import redis
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
@@ -108,12 +107,12 @@ class AuthToken:
 class AuthUser(AuthToken):
     redis_client = get_redis()
 
-    async def get_current_user(self, token: OAuth2PasswordBearer = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
+    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=MSC401_CREDENTIALS,
-            headers={'WWW-Authenticate': TOKEN_TYPE},  # 'Bearer'
-        )
+                                              status_code=status.HTTP_401_UNAUTHORIZED,
+                                              detail=MSC401_CREDENTIALS,
+                                              headers={'WWW-Authenticate': TOKEN_TYPE},
+                                              )
 
         try:
             payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
@@ -121,30 +120,35 @@ class AuthUser(AuthToken):
                 email = payload['sub']
                 if email is None:
                     raise credentials_exception
+                
             else:
                 raise credentials_exception
             
-        except:
+        except JWTError as e:
+            print(e)
             raise credentials_exception
         
         user = self.redis_client.get(email) if self.redis_client else None
 
         if user is None:
             user = await repository_users.get_user_by_email(email, db)
-            user = {'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'refresh_token': user.refresh_token,
-                    'roles': user.roles
-                    }
-            json_user = json.dumps(user)
+            # user = {'id': user.id,
+            #         'username': user.username,
+            #         'email': user.email,
+            #         'refresh_token': user.refresh_token,
+            #         'roles': user.roles
+            #         }
+            # json_user = json.dumps(user)
             if user is None:
                 raise credentials_exception
             
-            self.redis_client.set(email, user) if self.redis_client else None
-            self.redis_client.expire(email, 60) if self.redis_client else None
+            # self.redis_client.set(email, user) if self.redis_client else None
+            # self.redis_client.expire(email, 60) if self.redis_client else None
+            self.redis_client.set(f'user:{email}', pickle.dumps(user)) if self.redis_client else None
+            self.redis_client.expire(f'user:{email}', 90) if self.redis_client else None
 
         else:
-            user = json.loads(user)
+            # user = json.loads(user)
+            user = pickle.loads(user)
 
         return user
