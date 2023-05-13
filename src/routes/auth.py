@@ -53,14 +53,17 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
+    
     if not authpassword.verify_password(body.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_PASSWORD)
+    
     if not user.confirmed:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL_UNKNOWN)
 
     access_token = await authtoken.create_access_token(data={'sub': user.email})
     refresh_token = await authtoken.create_refresh_token(data={'sub': user.email})
     await repository_users.update_token(user, refresh_token, db)
+
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
@@ -76,6 +79,7 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
     access_token = await authtoken.create_access_token(data={'sub': email})
     refresh_token = await authtoken.create_refresh_token(data={'sub': email})
     await repository_users.update_token(user, refresh_token, db)
+    
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
@@ -84,10 +88,12 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
                         db: Session = Depends(get_db)):
     user = await repository_users.get_user_by_email(body.email, db)
 
-    if user.confirmed:
+    if user and user.confirmed:
         return {'message': EMAIL_ERROR_CONFIRMED}
+    
     if user:
         background_tasks.add_task(send_email, user.email, user.username, request.base_url)
+
     return {'message': EMAIL_INFO_CONFIRMED}
 
 

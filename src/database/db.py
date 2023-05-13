@@ -32,7 +32,7 @@ def get_db():
 
 def get_redis():
     try:
-        print(f'\n\t\t________________settings.redis_password={settings.redis_password}\n')
+        # print(f'\n\t\t________________settings.redis_password={settings.redis_password}\n')
         if settings.redis_password:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
@@ -40,6 +40,7 @@ def get_redis():
                                     db=0, 
                                     password=settings.redis_password
                                     )
+            
         elif settings.redis_password == '0' or not settings.redis_password:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
