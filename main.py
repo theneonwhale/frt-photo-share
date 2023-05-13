@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi_limiter.depends import FastAPILimiter
-import redis.asyncio as redis
+# import redis.asyncio as redis
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import uvicorn
@@ -10,7 +10,7 @@ import uvicorn
 
 from src.conf.config import settings
 from src.conf.messages import *
-from src.database.db import get_db
+from src.database.db import get_db, get_redis
 from src.routes import images
 from src.routes import auth
 
@@ -22,13 +22,7 @@ app.include_router(images.router, prefix='/api')
 
 @app.on_event('startup')
 async def startup():
-    redis_client = redis.Redis(
-                               host=settings.redis_host, 
-                               port=settings.redis_port, 
-                               db=0, 
-                               password=settings.redis_password
-                               )
-    await FastAPILimiter.init(redis_client)
+    await FastAPILimiter.init(get_redis())
 
 
 @app.get('/api/healthchecker')

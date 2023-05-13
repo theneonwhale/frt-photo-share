@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     mail_server: str = 'smtp.meta.ua'
     mail_from_name: str = 'sender: app photo-share'
     redis_host: str = 'localhost'
-    redis_password: str = 'password'
+    redis_password: str = ''
     redis_port: int = 6379
     cloudinary_name: str = 'name'
     cloudinary_api_key: int = 1
