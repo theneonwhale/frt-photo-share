@@ -24,7 +24,7 @@ authuser = AuthUser()
             dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
             response_model=Page, tags=['all_images']
             )
-async def get_contacts(
+async def get_images(
                        db: Session = Depends(get_db), 
                        current_user: User = Depends(authuser.get_current_user),
                        pagination_params: Params = Depends()
@@ -41,13 +41,32 @@ async def get_contacts(
             dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
             response_model=ImageResponse, tags=['image']
             )
-async def get_contact(
-                      contact_id: int = Path(ge=1),
-                      db: Session = Depends(get_db),
-                      current_user: User = Depends(authuser.get_current_user)
-                      ) -> Optional[Image]:
+async def get_image(
+                    image_id: int = Path(ge=1),
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(authuser.get_current_user)
+                    ) -> Optional[Image]:
 
-    image = await repository_images.get_image(contact_id, current_user, db)
+    image = await repository_images.get_image(image_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+    
+    return image
+
+
+@router.delete(
+               '/{image_id}', 
+               description=f'No more than {settings.limit_crit} requests per minute',
+               dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
+               response_model=ImageResponse, tags=['image']
+               )
+async def remove_image(
+                       image_id: int = Path(ge=1),
+                       db: Session = Depends(get_db),
+                       current_user: User = Depends(authuser.get_current_user)
+                       ) -> Optional[Image]:
+
+    image = await repository_images.remove_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
     
