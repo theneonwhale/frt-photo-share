@@ -82,3 +82,18 @@ class RequestEmail(BaseModel):
 class PasswordRecovery(BaseModel):
     """To check the sufficiency of the password during the password recovery procedure."""
     password: str = Field(min_length=6, max_length=14)
+
+
+class CommentModel(BaseModel):
+    comment: str = Field(max_length=2000)
+    user_id: int
+    image_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class CommentResponse(CommentModel):
+    id: int
+
+    class Config:
+        orm_mode = True

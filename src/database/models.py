@@ -1,10 +1,10 @@
 import enum
 
 from sqlalchemy import Column, Boolean, Date, DateTime, Enum, ForeignKey, func, Integer, String, Table 
-from sqlalchemy.orm import relationship, declarative_base  # ?!
-from sqlalchemy.ext.declarative import declarative_base  # ?!
+from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
+
 
 # from src.database.db import Base
 Base = declarative_base()
@@ -68,6 +68,18 @@ class Tag(Base):
     __tablename__ = 'tags'
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(20), nullable=False, unique=True)
+
+
+class Comment(Base):
+    __tablename__ = 'comments'
+    id = Column(Integer, primary_key=True)
+    comment = Column(String(2000), nullable=True)  # set unlimited? 
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    user = relationship('User', backref="comments")
+    image_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    image = relationship('Image', backref="comments")
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
 # alembic init migrations
