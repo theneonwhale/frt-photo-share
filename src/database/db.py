@@ -40,7 +40,7 @@ def get_redis():
                                     db=0, 
                                     password=settings.redis_password
                                     )
-        else:
+        elif settings.redis_password == '0' or not settings.redis_password:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
