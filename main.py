@@ -11,13 +11,13 @@ import uvicorn
 from src.conf.config import settings
 from src.conf.messages import *
 from src.database.db import get_db
-# from src.routes import pictures
+from src.routes import images
 from src.routes import auth
 
 
 app = FastAPI()
 app.include_router(auth.router, prefix='/api')
-# app.include_router(pictures.router, prefix='/api')
+app.include_router(images.router, prefix='/api')
 
 
 @app.on_event('startup')
