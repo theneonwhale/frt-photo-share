@@ -69,7 +69,7 @@ class AuthToken:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=MSC422_EMAIL_VERIFICATION)
 
-    async def refresh_token_email(self, refresh_token: str = Depends(oauth2_scheme)):
+    async def refresh_token_email(self, refresh_token: OAuth2PasswordBearer = Depends(oauth2_scheme)):
         try:
             payload = jwt.decode(refresh_token, self.SECRET_KEY, self.ALGORITHM)
             if payload['scope'] == 'refresh_token':
