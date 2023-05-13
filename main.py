@@ -56,3 +56,6 @@ if __name__ == '__main__':
 # http://0.0.0.0:8000
 # http://0.0.0.0:8000/docs#
 # http://0.0.0.0:8000/api/healthchecker
+
+
+# pagination != "^0.12.3" !!! need poetry update
