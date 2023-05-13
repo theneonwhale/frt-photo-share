@@ -2,6 +2,8 @@ import configparser
 import pathlib
 
 from fastapi import HTTPException, status
+import redis.asyncio as redis
+from redis.exceptions import AuthenticationError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
@@ -26,3 +28,27 @@ def get_db():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
     finally:
         db.close()
+
+
+def get_redis():
+    try:
+        if settings.redis_password:
+            redis_client = redis.Redis(
+                                    host=settings.redis_host, 
+                                    port=settings.redis_port, 
+                                    db=0, 
+                                    password=settings.redis_password
+                                    )
+        else:
+            redis_client = redis.Redis(
+                                    host=settings.redis_host, 
+                                    port=settings.redis_port, 
+                                    db=0
+                                    )
+    except AuthenticationError as error:
+        print(error)
+        
+    except Exception as error:
+        print(f'Unable to connect to redis\n{error}')
+
+    return redis_client

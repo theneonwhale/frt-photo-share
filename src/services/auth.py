@@ -10,7 +10,7 @@ import redis
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
-from src.database.db import get_db
+from src.database.db import get_db, get_redis
 from src.repository import users as repository_users
 from src.conf.messages import *
 
@@ -98,12 +98,13 @@ class AuthToken:
 
 
 class AuthUser(AuthToken):
-    redis_client = redis.Redis(
-                               host=settings.redis_host, 
-                               port=settings.redis_port, 
-                               db=0, 
-                               password=settings.redis_password
-                               )
+    redis_client = get_redis()
+    # redis_client = redis.Redis(
+    #                            host=settings.redis_host, 
+    #                            port=settings.redis_port, 
+    #                            db=0, 
+    #                            password=settings.redis_password
+    #                            )
 
     async def get_current_user(self, token: OAuth2PasswordBearer = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
