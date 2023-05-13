@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     cloudinary_name: str = 'name'
     cloudinary_api_key: int = 1
     cloudinary_api_secret: str = 'secret'
+    limit_crit: int = 12
 
     class Config:
         env_file = ".env"
