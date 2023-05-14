@@ -53,7 +53,7 @@ image_m2m_tag = Table('image_m2m_tag',
 
 class Image(Base):
     __tablename__ = 'images'
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     description = Column(String, nullable=True)
     type = Column('TransformationsType', Enum(TransformationsType), default=TransformationsType.basic)
     link = Column(String, nullable=False)

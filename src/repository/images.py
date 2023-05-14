@@ -9,7 +9,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from src.database.models import Image, User
-# from src.schemas import ImageModel
+from src.schemas import ImageModel
 
 
 async def get_images(
@@ -38,6 +38,18 @@ async def get_image(
             .filter_by(id=image_id)
             .first()
             )
+
+
+async def create_image(
+                       body: ImageModel,
+                       user: User,
+                       db: Session
+                       ) -> Image:
+    image = Image(description=body['description'], link=body['link'], user_id=user['id'])
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+    return image
 
 
 async def remove_image(
