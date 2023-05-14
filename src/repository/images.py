@@ -45,6 +45,7 @@ async def create_image(
                        user: User,
                        db: Session
                        ) -> Image:
+
     tags_names = body['tags'].split()
     if len(tags_names) > 5:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
@@ -58,9 +59,13 @@ async def create_image(
             tags.append(tag)
 
     image = Image(description=body['description'], link=body['link'], user_id=user.id, tags=tags)
+
+    #image = Image(description=body['description'], link=body['link'], user_id=user['id'])  # try?
+
     db.add(image)
     db.commit()
     db.refresh(image)
+
     return image
 
 
