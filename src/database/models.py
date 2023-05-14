@@ -46,8 +46,8 @@ class TransformationsType(enum.Enum):
 image_m2m_tag = Table('image_m2m_tag',
                       Base.metadata,
                       Column('id', Integer, primary_key=True),
-                      Column('image_d', Integer, ForeignKey('images.id', ondelete="CASCADE")),
-                      Column('tag_id', Integer, ForeignKey('tags.id', ondelete="CASCADE"))
+                      Column('image_d', Integer, ForeignKey('images.id', ondelete='CASCADE')),
+                      Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'))
                       )
 
 
@@ -58,7 +58,7 @@ class Image(Base):
     type = Column('TransformationsType', Enum(TransformationsType), default=TransformationsType.basic)
     link = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
-    user = relationship('User', backref="images")
+    user = relationship('User', backref='images')
     tags = relationship('Tag', secondary=image_m2m_tag, backref='images')
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -75,9 +75,9 @@ class Comment(Base):
     id = Column(Integer, primary_key=True)
     comment = Column(String(2000))  # set unlimited? nullable=True
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
-    user = relationship('User', backref="comments")
+    user = relationship('User', backref='comments')
     image_id = Column(Integer, ForeignKey('images.id', ondelete='CASCADE'), nullable=True)
-    image = relationship('Image', backref="comments")
+    image = relationship('Image', backref='comments')
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
