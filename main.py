@@ -1,3 +1,5 @@
+from datetime import datetime
+import traceback
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -7,12 +9,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 import uvicorn
 
-
 from src.conf.config import settings
 from src.conf.messages import *
 from src.database.db import get_db, get_async_redis
 from src.routes import images
 from src.routes import auth
+from services.asyncdevlogging import async_logging_to_file
 
 
 app = FastAPI()
@@ -26,17 +28,18 @@ async def startup():
 
 
 @app.get('/api/healthchecker')
-def healthchecker(db: Session = Depends(get_db)):
+async def healthchecker(db: Session = Depends(get_db)):
     try:
         # Make request
         result = db.execute(text('SELECT 1')).fetchone()
         if result is None:
+            await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONFIG)
         
         return {'message': WELCOME_FASTAPI}
     
     except Exception as e:
-        print(e)  # To log TODO
+        await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
         raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONNECT)
 
 
