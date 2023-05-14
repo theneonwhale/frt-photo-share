@@ -19,15 +19,17 @@ async def read_users_me(current_user: User = Depends(authuser.get_current_user))
 
 
 # TODO profile foe all users =>
-@router.get(f'/about_{authuser.get_current_user.username}', response_model=UserDb)
+@router.get('/about_{user_id}', response_model=UserDb)
 async def read_about_user(
+                          user_id: int,
                           current_user: User = Depends(authuser.get_current_user), 
                           db: Session = Depends(get_db)
                           ) -> User:
     # ... add number of uploaded images, etc ...
-    current_user.number_images = repository_users.get_number_of_images_per_user(current_user.email, db)
+    user = repository_users.get_user_by_id(user_id, db)
+    user.number_images = repository_users.get_number_of_images_per_user(user.email, db)
     
-    return current_user
+    return user
 
 
 @router.put(f'/{authuser.get_current_user.username}', response_model=UserDb)
