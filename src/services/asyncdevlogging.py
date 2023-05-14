@@ -33,6 +33,6 @@ async def async_logging_to_file(message: str) -> None:
 from datetime import datetime
 import traceback
 
-from src.services.asynclogging import async_logging_to_file
+from src.services.asyncdevlogging import async_logging_to_file
 await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
 '''

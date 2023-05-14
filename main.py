@@ -14,7 +14,7 @@ from src.conf.messages import *
 from src.database.db import get_db, get_async_redis
 from src.routes import images
 from src.routes import auth
-from src.services.asynclogging import async_logging_to_file
+from services.asyncdevlogging import async_logging_to_file
 
 
 app = FastAPI()
@@ -28,7 +28,7 @@ async def startup():
 
 
 @app.get('/api/healthchecker')
-def healthchecker(db: Session = Depends(get_db)):
+async def healthchecker(db: Session = Depends(get_db)):
     try:
         # Make request
         result = db.execute(text('SELECT 1')).fetchone()
