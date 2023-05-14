@@ -16,6 +16,7 @@ from src.repository import images as repository_images
 from src.schemas import ImageModel, ImageResponse, CommentModel
 from src.services.auth import AuthUser
 from src.services.images import CloudImage
+from src.services.roles import allowed_all_roles_access, allowed_operation_update, allowed_operation_delete
 
 
 router = APIRouter(prefix='/images')  # tags=['images']
@@ -27,7 +28,7 @@ security = HTTPBearer()
 @router.get(
             '/', 
             description=f'No more than {settings.limit_crit} requests per minute.',
-            dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
+            dependencies=[Depends(allowed_all_roles_access), Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
             response_model=Page, tags=['all_images']
             )
 async def get_images(
@@ -45,7 +46,7 @@ async def get_images(
 @router.get(
             '/{image_id}', 
             description=f'No more than {settings.limit_warn} requests per minute.',
-            dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
+            dependencies=[Depends(allowed_all_roles_access), Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
             response_model=ImageResponse, tags=['image']
             )
 async def get_image(
@@ -65,7 +66,7 @@ async def get_image(
 @router.post(
             '/',
             description=f'No more than {settings.limit_warn} requests per minute.',
-            dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
+            dependencies=[Depends(allowed_all_roles_access), Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
             response_model=ImageResponse, tags=['image']
             )
 async def create_image(
@@ -94,7 +95,7 @@ async def create_image(
 @router.delete(
                '/{image_id}', 
                description=f'No more than {settings.limit_crit} requests per minute',
-               dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
+               dependencies=[Depends(allowed_operation_delete), Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
                response_model=ImageResponse, tags=['image']
                )
 async def remove_image(
@@ -114,7 +115,7 @@ async def remove_image(
 @router.put(
             '/{image_id}', 
             description=f'No more than {settings.limit_crit} requests per minute',
-            dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
+            dependencies=[Depends(allowed_operation_update), Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
             response_model=ImageResponse, tags=['image']
             )
 async def update_image(
@@ -136,7 +137,7 @@ async def update_image(
 @router.post(
              '/{image_id}/{user_email}', 
              description=f'No more than {settings.limit_crit} requests per minute',
-             dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
+             dependencies=[Depends(allowed_all_roles_access), Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
              response_model=ImageResponse, tags=['image']
              )
 async def to_comment(
@@ -162,7 +163,7 @@ async def to_comment(
 @router.patch(
               '/{image_id}/to_name', 
               description=f'No more than {settings.limit_crit} requests per minute',
-              dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
+              dependencies=[Depends(allowed_operation_update), Depends(RateLimiter(times=settings.limit_crit, seconds=60))],
               response_model=ImageResponse, tags=['image']
               )
 async def change_name_image(

@@ -19,10 +19,7 @@ class RoleAccess:
         if current_user.roles not in self.allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_FORBIDDEN)
 
-'''
-allowed_operation_post = RoleAccess([Role.admin, Role.moderator, Role.user])
-allowed_operation_create = RoleAccess([Role.admin, Role.moderator, Role.user])
-allowed_operation_delete = RoleAccess([Role.admin])
+
+allowed_all_roles_access = RoleAccess([Role.admin, Role.moderator, Role.user])
 allowed_operation_update = RoleAccess([Role.admin, Role.moderator])
-allowed_operation_get = RoleAccess([Role.admin, Role.moderator, Role.user])
-'''
+allowed_operation_delete = RoleAccess([Role.admin])
