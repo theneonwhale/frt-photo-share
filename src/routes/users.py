@@ -18,10 +18,14 @@ async def read_users_me(current_user: User = Depends(authuser.get_current_user))
     return current_user
 
 
-@router.get(f'/about_{authuser.get_current_user.username}/', response_model=UserDb)  # User
-async def read_users_me(current_user: User = Depends(authuser.get_current_user)) -> User:
-    response_about = {}
-
+@router.get(f'/about_{authuser.get_current_user.username}/', response_model=UserDb)
+async def read_users_me(
+                        current_user: User = Depends(authuser.get_current_user), 
+                        db: Session = Depends(get_db)
+                        ) -> User:
+    # ... add number of uploaded images, etc ...
+    current_user.number_images = repository_users.get_number_of_images_per_user(current_user.email, db)
+    
     return current_user
 
 
