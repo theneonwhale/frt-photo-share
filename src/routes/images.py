@@ -1,6 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status, Path, UploadFile, File
+
+from fastapi import APIRouter, Depends, HTTPException, status, Path, UploadFile, File, Security
+
 from fastapi_limiter.depends import RateLimiter
 from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -68,17 +70,21 @@ async def get_image(
             )
 async def create_image(
                       description: str = '',
+                      tags: str = '',
                       file: UploadFile = File(),
                       db: Session = Depends(get_db),
                       current_user: User = Depends(authuser.get_current_user),
                       credentials: HTTPAuthorizationCredentials = Security(security)
                       ) -> Image:
-    public_id = CloudImage.generate_name_image(current_user['email'])
+    public_id = CloudImage.generate_name_image(current_user.email)
     r = CloudImage.image_upload(file.file, public_id)
     src_url = CloudImage.get_url_for_image(public_id, r)
     body = {
-        'description': description,
-        'link': src_url
+
+        "description": description,
+        "link": src_url,
+        'tags': tags
+
     }
     image = await repository_images.create_image(body, current_user, db)
 

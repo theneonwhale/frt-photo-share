@@ -47,7 +47,7 @@ class TagModel(BaseModel):
 
 
 class TagResponse(TagModel):
-    id: int
+    name: str
 
     class Config:
         orm_mode = True
