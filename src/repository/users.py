@@ -1,7 +1,7 @@
 from libgravatar import Gravatar  # poetry add libgravatar
 from sqlalchemy.orm import Session
 
-from src.database.models import User
+from src.database.models import Image, User
 from src.schemas import UserModel
 
 
@@ -53,3 +53,7 @@ async def update_avatar(email, url: str, db: Session) -> User:
     db.refresh(user)
     
     return user
+
+
+async def get_number_of_images_per_user(email: str, db: Session) -> int:
+    return db.query(Image).filter(User.email == email).count()

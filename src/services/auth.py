@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from src.conf.config import settings
 from src.database.db import get_db, get_redis
+from src.database.models import User
 from src.repository import users as repository_users
 from src.conf.messages import *
 
@@ -107,7 +108,7 @@ class AuthToken:
 class AuthUser(AuthToken):
     redis_client = get_redis()
 
-    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)):
+    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> User:
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=MSC401_CREDENTIALS,
@@ -128,10 +129,10 @@ class AuthUser(AuthToken):
             print(e)
             raise credentials_exception
         
-        user = self.redis_client.get(email) if self.redis_client else None
+        user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
 
         if user is None:
-            user = await repository_users.get_user_by_email(email, db)
+            user: User = await repository_users.get_user_by_email(email, db)
             # user = {'id': user.id,
             #         'username': user.username,
             #         'email': user.email,
@@ -149,6 +150,6 @@ class AuthUser(AuthToken):
 
         else:
             # user = json.loads(user)
-            user = pickle.loads(user)
+            user: User = pickle.loads(user)
 
         return user
