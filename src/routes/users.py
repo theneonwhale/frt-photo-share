@@ -13,18 +13,30 @@ router = APIRouter(prefix='/users', tags=['users'])
 authuser = AuthUser()
 
 
-@router.get('/me/', response_model=UserDb)
+@router.get('/me', response_model=UserDb)  # /me/  ?
 async def read_users_me(current_user: User = Depends(authuser.get_current_user)) -> User:
     return current_user
 
 
-@router.get(f'/about_{authuser.get_current_user.username}/', response_model=UserDb)
-async def read_users_me(
-                        current_user: User = Depends(authuser.get_current_user), 
-                        db: Session = Depends(get_db)
-                        ) -> User:
+# TODO profile foe all users =>
+@router.get(f'/about_{authuser.get_current_user.username}', response_model=UserDb)
+async def read_about_user(
+                          current_user: User = Depends(authuser.get_current_user), 
+                          db: Session = Depends(get_db)
+                          ) -> User:
     # ... add number of uploaded images, etc ...
     current_user.number_images = repository_users.get_number_of_images_per_user(current_user.email, db)
+    
+    return current_user
+
+
+@router.put(f'/{authuser.get_current_user.username}', response_model=UserDb)
+async def update_user_profile(
+                              current_user: User = Depends(authuser.get_current_user), 
+                              db: Session = Depends(get_db)
+                              ) -> User:
+    
+    ...
     
     return current_user
 
