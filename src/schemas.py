@@ -21,6 +21,7 @@ class UserDb(BaseModel):
     email: str
     created_at: datetime
     avatar: str
+    number_images: int
 
     class Config:
         """Indicates that the UserDb model is used to represent the ORM model."""

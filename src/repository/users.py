@@ -1,12 +1,19 @@
+from typing import Optional
+
+from fastapi.encoders import jsonable_encoder
 from libgravatar import Gravatar  # poetry add libgravatar
 from sqlalchemy.orm import Session
 
-from src.database.models import User
+from src.database.models import Image, User
 from src.schemas import UserModel
 
 
 async def get_user_by_email(email: str, db: Session) -> User:
     return db.query(User).filter(User.email == email).first()
+
+
+async def get_user_by_id(id: int, db: Session) -> User:
+    return db.query(User).filter(User.id == id).first()
 
 
 async def create_user(body: UserModel, db: Session) -> User:
@@ -18,7 +25,7 @@ async def create_user(body: UserModel, db: Session) -> User:
     except Exception as e:
         print(e)
 
-    new_user = User(**body.dict(), avatar=avatar)
+    new_user: User = User(**body.dict(), avatar=avatar)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -41,14 +48,40 @@ async def update_token(user: User, token: str | None, db: Session) -> None:
 
 
 async def confirmed_email(email: str, db: Session) -> None:
-    user = await get_user_by_email(email, db)
+    user: User = await get_user_by_email(email, db)
     user.confirmed = True
     db.commit()
 
 
 async def update_avatar(email, url: str, db: Session) -> User:
-    user = await get_user_by_email(email, db)
+    user: User = await get_user_by_email(email, db)
     user.avatar = url
+    db.commit()
+    db.refresh(user)
+    
+    return user
+
+
+async def get_number_of_images_per_user(email: str, db: Session) -> int:
+    return db.query(Image).filter(User.email == email).count()
+
+
+async def update_user(email, body_data: UserModel, db: Session) -> Optional[User]:
+    user: User = await get_user_by_email(email, db)
+    if not user:
+        return None
+
+    db_obj_data: Optional[dict] = user.__dict__  # if user else None
+    body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
+    
+    if not db_obj_data or not body_data:
+        return None
+
+    for field in db_obj_data:
+        if field in body_data:
+            setattr(user, field, body_data[field])  # username, email, password ...  ! + avatar[to fix UserModel?] or separately?
+
+    db.add(user)
     db.commit()
     db.refresh(user)
     
