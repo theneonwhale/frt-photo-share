@@ -62,6 +62,10 @@ class ImageModel(BaseModel):
 
 class ImageResponse(ImageModel):
     id: int
+    user_id: int
+    link: str
+    description: str
+    tags: List[TagResponse]
 
     class Config:
         orm_mode = True

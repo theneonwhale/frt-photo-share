@@ -57,6 +57,21 @@ class CloudImage:
 
         return CloudImage.get_url_for_avatar(avatar_id, upload_result, clipping)
 
+    @staticmethod
+    def generate_name_image(email: str):
+        image_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:12]
+        return f"FRT-PHOTO-SHARE-IMAGES/{image_name}"
+
+    @staticmethod
+    def image_upload(file, public_id: str):
+        r = cloudinary.uploader.upload(file, public_id=public_id, overwrite=True)
+        return r
+
+    @staticmethod
+    def get_url_for_image(public_id, r):
+        src_url = cloudinary.CloudinaryImage(public_id).build_url(version=r.get('version'))
+        return src_url
+
 
 cloud_image = CloudImage()
 # u2 =cloudinary.utils.cloudinary_url("test2_kwhfn6", transformation=cloud_image.filters['avatar'])

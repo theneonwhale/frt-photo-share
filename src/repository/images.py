@@ -38,6 +38,18 @@ async def get_image(
             )
 
 
+async def create_image(
+                       body: ImageModel,
+                       user: User,
+                       db: Session
+                       ) -> Image:
+    image = Image(description=body['description'], link=body['link'], user_id=user['id'])
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+    return image
+
+
 async def remove_image(
                        image_id: int,
                        user: User,  # !

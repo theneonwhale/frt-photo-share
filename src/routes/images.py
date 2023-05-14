@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, UploadFile, File
 from fastapi_limiter.depends import RateLimiter
 from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,6 +13,7 @@ from src.database.models import Image, User
 from src.repository import images as repository_images
 from src.schemas import ImageModel, ImageResponse, CommentModel
 from src.services.auth import AuthUser
+from src.services.images import CloudImage
 
 
 router = APIRouter(prefix='/images')  # tags=['images']
@@ -35,7 +36,6 @@ async def get_images(
                        ) -> Page:
  
     images = await repository_images.get_images(current_user, db, pagination_params)  # db, pagination_params
-
     return images
 
 
@@ -55,7 +55,29 @@ async def get_image(
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-    
+    return image
+
+
+@router.post(
+            '/',
+            description=f'No more than {settings.limit_warn} requests per minute.',
+            dependencies=[Depends(RateLimiter(times=settings.limit_warn, seconds=60))],
+            response_model=ImageResponse, tags=['image']
+            )
+async def create_image(
+                      description: str = '',
+                      file: UploadFile = File(),
+                      db: Session = Depends(get_db),
+                      current_user: User = Depends(authuser.get_current_user)
+                      ) -> Image:
+    public_id = CloudImage.generate_name_image(current_user['email'])
+    r = CloudImage.image_upload(file.file, public_id)
+    src_url = CloudImage.get_url_for_image(public_id, r)
+    body = {
+        "description": description,
+        "link": src_url
+    }
+    image = await repository_images.create_image(body, current_user, db)
     return image
 
 
@@ -75,7 +97,6 @@ async def remove_image(
     image = await repository_images.remove_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-    
     return image
 
 
