@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     cloudinary_api_secret: str = 'secret'
     limit_crit: int = 12
     limit_warn: int = 2
+    tags_limit: int = 5
 
     class Config:
         env_file = '.env'

@@ -41,26 +41,25 @@ async def get_image(
 
 
 async def create_image(
-                       body,
+                       body: dict,
                        user: User,
-                       db: Session
+                       db: Session,
+                       tags_limit: int
                        ) -> Image:
 
-    tags_names = body['tags'].split()
-    if len(tags_names) > 5:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
+    tags_names = body['tags'].split()  # None? get...
+    if len(tags_names) > tags_limit:  # 5
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
+    
     tags = []
     for el in tags_names:
         tag = await repository_tags.get_tag_by_name(el, db)
         if tag is None:
             tag = await repository_tags.create_tag(el, db)
-            tags.append(tag)
-        else:
-            tags.append(tag)
 
-    image = Image(description=body['description'], link=body['link'], user_id=user.id, tags=tags)
+        tags.append(tag)
 
-    #image = Image(description=body['description'], link=body['link'], user_id=user['id'])  # try?
+    image = Image(description=body['description'], link=body['link'], user_id=user.id, tags=tags)  # try?
 
     db.add(image)
     db.commit()
@@ -90,13 +89,15 @@ async def update_image(
                        image_id: int,
                        body: ImageModel,
                        user: User,  # !
-                       db: Session
+                       db: Session,
+                       tags_limit: int
                        ) -> Optional[Image]:
 
     # .filter(Image.id == image_id)
     image: Image = db.query(Image).filter_by(id=image_id).first()  
 
-    # FOR edit only description:
+    '''
+    # FOR edit only description?:
     if not image or not body.description:
         return None
     
@@ -111,13 +112,27 @@ async def update_image(
     
     if not db_obj_data or not body_data:
         return None
+    
+    tags_names = body.tags.split()
+    # if len(tags_names) > tags_limit:  # 5
+    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
+    tags_names = tags_names[:tags_limit]
+    
+    tags = []
+    for el in tags_names:
+        tag = await repository_tags.get_tag_by_name(el, db)
+        if tag is None:
+            tag = await repository_tags.create_tag(el, db)
 
+        tags.append(tag)
+    
+    body_data['tags'] = tags
     for field in db_obj_data:
         if field in body_data:
-            setattr(image, field, body_data[field])  # ! & Tags how? ... compendium's example
+            setattr(image, field, body_data[field]) if field != 'link' else None  # or remove from ImageModel
 
     db.add(image)
-    '''        
+
     db.commit()
     db.refresh(image)
 
@@ -139,7 +154,6 @@ async def to_comment(
         db.commit()
         db.refresh(comment)
 
-    else:
-        return None
+        return image
 
-    return image
+    return None   
