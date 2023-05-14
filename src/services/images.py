@@ -19,20 +19,20 @@ class CloudImage:
     )
 
     filters = {'avatar': [
-        {'aspect_ratio': "1.0", 'gravity': "face", 'width': 500, 'zoom': '2', 'crop': "thumb"},
-        {'radius': "max"},
-        {'color': "brown", 'effect': "outline"}
+        {'aspect_ratio': '1.0', 'gravity': 'face', 'width': 500, 'zoom': '2', 'crop': 'thumb'},
+        {'radius': 'max'},
+        {'color': 'brown', 'effect': 'outline'}
         ],
-        'black_white': [{'effect': "grayscale"}],
-        'delete_bg': [{'effect': "bgremoval"}],
-        'cartoonify': [{'effect': "cartoonify"}],
-        "oil_paint": [{'effect': "oil_paint:100"}],
+        'black_white': [{'effect': 'grayscale'}],
+        'delete_bg': [{'effect': 'bgremoval'}],
+        'cartoonify': [{'effect': 'cartoonify'}],
+        'oil_paint': [{'effect': 'oil_paint:100'}],
         'vector': [{'effect': 'vectorize:colors:5:corners:40:detail:1.0'}],
-        'sepia': [{'effect': "sepia:100"}],
+        'sepia': [{'effect': 'sepia:100'}],
         'outline': [
-            {'width': 200, 'crop': "scale"},
-            {'color': "blue", 'effect': "outline:20:200"},
-            {'color': "yellow", 'effect': "outline:15:200"}
+            {'width': 200, 'crop': 'scale'},
+            {'color': 'blue', 'effect': 'outline:20:200'},
+            {'color': 'yellow', 'effect': 'outline:15:200'}
         ]
     }
 
@@ -60,12 +60,11 @@ class CloudImage:
     @staticmethod
     def generate_name_image(email: str):
         image_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:12]
-        return f"FRT-PHOTO-SHARE-IMAGES/{image_name}"
+        return f'FRT-PHOTO-SHARE-IMAGES/{image_name}'
 
     @staticmethod
     def image_upload(file, public_id: str):
-        r = cloudinary.uploader.upload(file, public_id=public_id, overwrite=True)
-        return r
+        return cloudinary.uploader.upload(file, public_id=public_id, overwrite=True)
 
     @staticmethod
     def get_url_for_image(public_id, r):
@@ -74,5 +73,5 @@ class CloudImage:
 
 
 cloud_image = CloudImage()
-# u2 =cloudinary.utils.cloudinary_url("test2_kwhfn6", transformation=cloud_image.filters['avatar'])
-# u3 =cloudinary.utils.cloudinary_url("cld-sample-5", transformation=cloud_image.filters['bg'])
+# u2 =cloudinary.utils.cloudinary_url('test2_kwhfn6', transformation=cloud_image.filters['avatar'])
+# u3 =cloudinary.utils.cloudinary_url('cld-sample-5', transformation=cloud_image.filters['bg'])

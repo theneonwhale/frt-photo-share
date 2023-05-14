@@ -43,10 +43,11 @@ async def create_image(
                        user: User,
                        db: Session
                        ) -> Image:
-    image = Image(description=body['description'], link=body['link'], user_id=user['id'])
+    image = Image(description=body['description'], link=body['link'], user_id=user['id'])  # try?
     db.add(image)
     db.commit()
     db.refresh(image)
+
     return image
 
 
