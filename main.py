@@ -14,7 +14,7 @@ from src.conf.messages import *
 from src.database.db import get_db, get_async_redis
 from src.routes import images
 from src.routes import auth
-from services.asyncdevlogging import async_logging_to_file
+from src.services.asyncdevlogging import async_logging_to_file
 
 
 app = FastAPI()

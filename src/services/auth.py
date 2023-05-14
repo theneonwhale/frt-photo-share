@@ -126,11 +126,11 @@ class AuthUser(AuthToken):
                 raise credentials_exception
             
         except JWTError as e:
+
             print(e)
             raise credentials_exception
         
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
-
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
             # user = {'id': user.id,

@@ -1,15 +1,17 @@
 # from datetime import date, timedelta
 from typing import Optional
 
-# from fastapi import HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User
+from src.database.models import Comment, Image, User, Tag
 from src.schemas import ImageModel, CommentModel
+from src.conf.messages import *
+from src.repository import tags as repository_tags
 
 
 async def get_images(
@@ -39,11 +41,23 @@ async def get_image(
 
 
 async def create_image(
-                       body: ImageModel,
+                       body,
                        user: User,
                        db: Session
                        ) -> Image:
-    image = Image(description=body['description'], link=body['link'], user_id=user['id'])
+    tags_names = body['tags'].split()
+    if len(tags_names) > 5:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
+    tags = []
+    for el in tags_names:
+        tag = await repository_tags.get_tag_by_name(el, db)
+        if tag is None:
+            tag = await repository_tags.create_tag(el, db)
+            tags.append(tag)
+        else:
+            tags.append(tag)
+
+    image = Image(description=body['description'], link=body['link'], user_id=user.id, tags=tags)
     db.add(image)
     db.commit()
     db.refresh(image)
