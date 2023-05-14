@@ -29,6 +29,7 @@ class User(Base):
     refresh_token = Column(String(255), nullable=True)
     roles = Column('roles', Enum(Role), default=Role.user)
     confirmed = Column(Boolean, default=False)  # whether the user's email was confirmed
+    status_active = Column(Boolean, default=True)
 
 
 class TransformationsType(enum.Enum):

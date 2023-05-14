@@ -1,8 +1,6 @@
 from typing import Optional
 
-
-from fastapi import APIRouter, Depends, HTTPException, status, Path, UploadFile, File, Security
-
+from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
 from fastapi_limiter.depends import RateLimiter
 from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -70,7 +68,7 @@ async def get_image(
             response_model=ImageResponse, tags=['image']
             )
 async def create_image(
-                      description: str = '',
+                      description: str = '-',
                       tags: str = '',
                       file: UploadFile = File(),
                       db: Session = Depends(get_db),
@@ -81,13 +79,11 @@ async def create_image(
     r = CloudImage.image_upload(file.file, public_id)
     src_url = CloudImage.get_url_for_image(public_id, r)
     body = {
-
-        "description": description,
-        "link": src_url,
-        'tags': tags
-
-    }
-    image = await repository_images.create_image(body, current_user, db)
+            'description': description,
+            'link': src_url,
+            'tags': tags
+            }
+    image = await repository_images.create_image(body, current_user, db, settings.tags_limit)
 
     return image
 
@@ -108,6 +104,7 @@ async def remove_image(
     image = await repository_images.remove_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+    
     return image
 
 
@@ -126,7 +123,7 @@ async def update_image(
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Image:  
 
-    image = await repository_images.update_image(image_id, body, current_user, db)
+    image = await repository_images.update_image(image_id, body, current_user, db, settings.tags_limit)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
 

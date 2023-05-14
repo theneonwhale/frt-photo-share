@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import traceback
 import pickle  # json
 from typing import Optional
 
@@ -9,10 +10,11 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
+from src.conf.messages import *
 from src.database.db import get_db, get_redis
 from src.database.models import User
 from src.repository import users as repository_users
-from src.conf.messages import *
+from src.services.asyncdevlogging import async_logging_to_file
 
 
 class AuthPassword:
@@ -126,13 +128,15 @@ class AuthUser(AuthToken):
                 raise credentials_exception
             
         except JWTError as e:
+            await async_logging_to_file(f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
 
-            print(e)
             raise credentials_exception
         
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
+        await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
+            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tget_user_by_email: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
             # user = {'id': user.id,
             #         'username': user.username,
             #         'email': user.email,
@@ -145,11 +149,16 @@ class AuthUser(AuthToken):
             
             # self.redis_client.set(email, user) if self.redis_client else None
             # self.redis_client.expire(email, 60) if self.redis_client else None
-            self.redis_client.set(f'user:{email}', pickle.dumps(user)) if self.redis_client else None
-            self.redis_client.expire(f'user:{email}', 90) if self.redis_client else None
+            self.redis_client.set(email, pickle.dumps(user)) if self.redis_client else None
+            self.redis_client.expire(email, 90) if self.redis_client else None
 
         else:
             # user = json.loads(user)
             user: User = pickle.loads(user)
+            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser unpacked from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
+
+        if not user.status_active:
+            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user.status_active}\t{traceback.extract_stack(None, 2)[1][2]}')
+            raise credentials_exception  # or a special answer?
 
         return user

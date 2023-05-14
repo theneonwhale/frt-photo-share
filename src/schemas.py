@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     avatar: str
     roles: Role
     detail: str = MSC201_USER_CREATED
+    status_active: bool  # !
     
     class Config:
         orm_mode = True
@@ -47,7 +48,7 @@ class TagModel(BaseModel):
 
 
 class TagResponse(TagModel):
-    name: str
+    name: str  # ? duplicat line 46
 
     class Config:
         orm_mode = True
@@ -57,7 +58,7 @@ class ImageModel(BaseModel):
     description: str = Field(max_length=50)
     link: str
     user_id: int
-    tags: List[int]
+    tags: str  # str! not List[int]
 
 
 class ImageResponse(ImageModel):
