@@ -24,17 +24,18 @@ def get_db():
     db = DBSession()
     try:
         yield db
+
     except SQLAlchemyError as err:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+    
     finally:
         db.close()
 
 
 def get_async_redis():
     try:
-        # print(f'\n\t\t________________settings.redis_password={settings.redis_password}\n')
-        if settings.redis_password:
+        if settings.redis_password and settings.redis_password != '0':
             redis_client = aredis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
@@ -42,7 +43,7 @@ def get_async_redis():
                                     password=settings.redis_password
                                     )
             
-        elif settings.redis_password == '0' or not settings.redis_password:
+        else:
             redis_client = aredis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
@@ -62,8 +63,7 @@ def get_async_redis():
 
 def get_redis():
     try:
-        # print(f'\n\t\t________________settings.redis_password={settings.redis_password}\n')
-        if settings.redis_password:
+        if settings.redis_password and settings.redis_password != '0':
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
@@ -71,7 +71,7 @@ def get_redis():
                                     password=settings.redis_password
                                     )
             
-        elif settings.redis_password == '0' or not settings.redis_password:
+        else:
             redis_client = redis.Redis(
                                     host=settings.redis_host, 
                                     port=settings.redis_port, 
