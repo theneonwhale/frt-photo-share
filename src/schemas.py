@@ -89,9 +89,9 @@ class PasswordRecovery(BaseModel):
 
 
 class CommentModel(BaseModel):
+    # user_id: int
+    # image_id: int
     comment: str = Field(max_length=2000)
-    user_id: int
-    image_id: int
     # created_at: datetime
     # updated_at: datetime
 

@@ -100,7 +100,7 @@ async def remove_image(
                        ) -> Optional[Image]:
     # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
     # if user.id == Image.user_id or user.rile ...
-    image: Image = db.query(Image).filter_by(id=image_id).first()
+    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
     if image:
         db.delete(image)
         db.commit()
@@ -117,7 +117,7 @@ async def update_image(
                        tags_limit: int
                        ) -> Optional[Image]:
     # .filter(Image.id == image_id)
-    image: Image = db.query(Image).filter_by(id=image_id).first()  
+    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
     '''
     # FOR edit only description?:
     if not image or not body.description:
@@ -160,51 +160,3 @@ async def update_image(
 
     return image
 
-
-# Leave a comment...
-async def add_comment(
-                      body: CommentModel,
-                      image_id: int,  # !
-                      user: dict,
-                      db: Session
-                      ) -> Optional[Image]:
-    image: Image = db.query(Image).filter_by(id=image_id).first()
-    if image:
-        comment = Comment(**body.dict())  # user_id=user.get('id'), image_id=image_id =already in body (CommentModel)
-        db.add(comment)
-        db.commit()
-        db.refresh(comment)
-
-        return image
-
-
-# EDIT comment
-async def update_comment(
-                       comment_id: int,
-                       body: CommentModel,
-                       user: dict,  # !
-                       db: Session,
-                       ) -> Optional[Image]:
-    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()  
-    if not comment or not body.comment:
-        return None
-    
-    comment.comment = body.comment
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
-
-    return db.query(Image).filter_by(id=comment.image_id).first()
-
-
-async def remove_comment(
-                         comment_id: int,
-                         user: User,  # !
-                         db: Session
-                         ) -> Optional[Image]:
-    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
-    if comment:
-        db.delete(comment)
-        db.commit()
-
-    return db.query(Image).filter_by(id=comment.image_id).first()

@@ -9,7 +9,7 @@ from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
-from src.conf.messages import MSC404_IMAGE_NOT_FOUND, MSC412_IMPOSSIBLE
+from src.conf.messages import *
 from src.database.db import get_db
 from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
@@ -65,6 +65,8 @@ async def transform_image(
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+    if image.user_id != current_user['id']:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=MSC400_BAD_REQUEST)
 
     transform_image_link = CloudImage.transformation(image, type)
 
@@ -165,7 +167,7 @@ async def create_image(
                '/{image_id}', 
                description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
-                             Depends(allowed_operation_delete), 
+                             # Depends(allowed_operation_delete),
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                              ],
                response_model=ImageResponse, 
@@ -190,7 +192,7 @@ async def remove_image(
             '/{image_id}', 
             description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
-                          Depends(allowed_operation_update), 
+                          # Depends(allowed_operation_update),
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                           ],
             response_model=ImageResponse, 
@@ -211,81 +213,6 @@ async def update_image(
     return image
 
 
-# Leave a comment... patch? post!?! addition to post-create?  ... & put? 
-@router.post(
-             '/{image_id}/{user_email}', 
-             description=f'Add comment.\nNo more than {settings.limit_crit} requests per minute.',
-             dependencies=[
-                           Depends(allowed_all_roles_access), 
-                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
-                           ],
-             response_model=ImageResponse, 
-             tags=['image']
-             )
-async def add_comment(
-                     body: CommentModel,
-                     image_id: int = Path(ge=1),
-                     user_email: str = Path(),  # regex... Email
-                     db: Session = Depends(get_db),
-                     current_user: dict = Depends(authuser.get_current_user),
-                     credentials: HTTPAuthorizationCredentials = Security(security)
-                     ) -> Optional[Image]:
-    if user_email != current_user.get('email'):
-        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail=MSC412_IMPOSSIBLE)
-    
-    image = await repository_images.add_comment(body, image_id, current_user, db)
-    if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-
-    return image
-
-
-# EDIT comment...
-@router.put(
-            '/comment/{comment_id}', 
-            description=f'Update comment.\nNo more than {settings.limit_crit} requests per minute.',
-            dependencies=[
-                          Depends(allowed_operation_update), 
-                          Depends(RateLimiter(times=settings.limit_crit, seconds=60))
-                          ],
-            response_model=ImageResponse, 
-            tags=['image']
-            )
-async def update_comment(
-                         body: CommentModel,
-                         comment_id: int = Path(ge=1), 
-                         db: Session = Depends(get_db),
-                         current_user: dict = Depends(authuser.get_current_user),
-                         credentials: HTTPAuthorizationCredentials = Security(security)
-                         ) -> Image:
-    image = await repository_images.update_comment(comment_id, body, current_user, db, settings.tags_limit)
-    if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-
-    return image
-
-
-@router.delete(
-               '/comment/{coment_id}', 
-               description=f'Remove comment.\nNo more than {settings.limit_crit} requests per minute.',
-               dependencies=[
-                             Depends(allowed_operation_delete), 
-                             Depends(RateLimiter(times=settings.limit_warn, seconds=60))
-                             ],
-               response_model=ImageResponse, 
-               tags=['comment']
-               )
-async def remove_comment(
-                         comment_id: int = Path(ge=1),
-                         db: Session = Depends(get_db),
-                         current_user: dict = Depends(authuser.get_current_user),
-                         credentials: HTTPAuthorizationCredentials = Security(security)
-                         ) -> Optional[Image]:  # Comment?
-    image = await repository_images.remove_comment(comment_id, current_user, db)
-    if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-    
-    return image
 
 
 # https://github.com/uriyyo/fastapi-pagination
