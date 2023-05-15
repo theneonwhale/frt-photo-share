@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 from src.conf.config import settings
 from src.conf.messages import MSC404_IMAGE_NOT_FOUND, MSC412_IMPOSSIBLE
 from src.database.db import get_db
-from src.database.models import Image, User, TransformationsType
+from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
 from src.schemas import ImageModel, ImageResponse, CommentModel
 from src.services.auth import authuser, security
-from src.services.images import CloudImage, cloud_image
+from src.services.images import CloudImage  #, cloud_image
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
 
@@ -28,7 +28,8 @@ router = APIRouter(prefix='/images')  # tags=['images']
                           Depends(allowed_all_roles_access), 
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                           ],
-            response_model=Page, tags=['all_images']
+            response_model=Page, 
+            tags=['all_images']
             )
 async def get_images(
                        db: Session = Depends(get_db), 
@@ -49,13 +50,15 @@ async def get_images(
                            Depends(allowed_all_roles_access),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                            ],
-            response_model=ImageResponse, tags=['image']
+            response_model=ImageResponse, 
+            tags=['image']
             )
 async def transform_image(
                         type: TransformationsType,
                         image_id: int = Path(ge=1),
                         db: Session = Depends(get_db),
                         current_user: dict = Depends(authuser.get_current_user),
+                        credentials: HTTPAuthorizationCredentials = Security(security)
                         ) -> Optional[Image]:
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
@@ -64,11 +67,11 @@ async def transform_image(
     transform_image_link = CloudImage.transformation(image, type)
 
     body = {
-        'description': image.description,
-        'link': transform_image_link,
-        'tags': image.tags,
-        'type': type.value
-    }
+            'description': image.description,
+            'link': transform_image_link,
+            'tags': image.tags,
+            'type': type.value
+            }
     new_image = await repository_images.transform_image(body, image.user_id, db)
 
     return new_image
@@ -82,7 +85,8 @@ async def transform_image(
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                           ],
-            response_model=ImageResponse, tags=['image']
+            response_model=ImageResponse, 
+            tags=['image']
             )
 async def get_image(
                     image_id: int = Path(ge=1),
@@ -105,16 +109,17 @@ async def get_image(
                           Depends(allowed_all_roles_access), 
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                           ],
-            response_model=ImageResponse, tags=['image']
+            response_model=ImageResponse, 
+            tags=['image']
             )
 async def create_image(
-                      description: str = '-',
-                      tags: str = '',
-                      file: UploadFile = File(),
-                      db: Session = Depends(get_db),
-                      current_user: dict = Depends(authuser.get_current_user),
-                      credentials: HTTPAuthorizationCredentials = Security(security)
-                      ) -> Image:
+                       description: str = '-',
+                       tags: str = '',
+                       file: UploadFile = File(),
+                       db: Session = Depends(get_db),
+                       current_user: dict = Depends(authuser.get_current_user),
+                       credentials: HTTPAuthorizationCredentials = Security(security)
+                       ) -> Image:
     public_id = CloudImage.generate_name_image(current_user.get('email'), file.filename)
     r = CloudImage.image_upload(file.file, public_id)
     src_url = CloudImage.get_url_for_image(public_id, r)
@@ -135,7 +140,8 @@ async def create_image(
                              Depends(allowed_operation_delete), 
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                              ],
-               response_model=ImageResponse, tags=['image']
+               response_model=ImageResponse, 
+               tags=['image']
                )
 async def remove_image(
                        image_id: int = Path(ge=1),
@@ -159,7 +165,8 @@ async def remove_image(
                           Depends(allowed_operation_update), 
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                           ],
-            response_model=ImageResponse, tags=['image']
+            response_model=ImageResponse, 
+            tags=['image']
             )
 async def update_image(
                        body: ImageModel,
@@ -184,9 +191,10 @@ async def update_image(
                            Depends(allowed_all_roles_access), 
                            Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                            ],
-             response_model=ImageResponse, tags=['image']
+             response_model=ImageResponse, 
+             tags=['image']
              )
-async def to_comment(
+async def add_comment(
                      body: CommentModel,
                      image_id: int = Path(ge=1),
                      user_email: str = Path(),  # regex... Email
@@ -197,7 +205,32 @@ async def to_comment(
     if user_email != current_user.get('email'):
         raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail=MSC412_IMPOSSIBLE)
     
-    image = await repository_images.to_comment(body, image_id, current_user, db)
+    image = await repository_images.add_comment(body, image_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    return image
+
+
+# EDIT comment...
+@router.put(
+            '/comment/{comment_id}', 
+            description=f'No more than {settings.limit_crit} requests per minute',
+            dependencies=[
+                          Depends(allowed_operation_update), 
+                          Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                          ],
+            response_model=ImageResponse, 
+            tags=['image']
+            )
+async def update_comment(
+                         body: CommentModel,
+                         comment_id: int = Path(ge=1), 
+                         db: Session = Depends(get_db),
+                         current_user: dict = Depends(authuser.get_current_user),
+                         credentials: HTTPAuthorizationCredentials = Security(security)
+                         ) -> Image:
+    image = await repository_images.update_comment(comment_id, body, current_user, db, settings.tags_limit)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
 
@@ -205,13 +238,14 @@ async def to_comment(
 
 
 @router.delete(
-               '/{coment_id}', 
+               '/comment/{coment_id}', 
                description=f'No more than {settings.limit_crit} requests per minute',
                dependencies=[
                              Depends(allowed_operation_delete), 
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                              ],
-               response_model=ImageResponse, tags=['comment']
+               response_model=ImageResponse, 
+               tags=['comment']
                )
 async def remove_comment(
                          comment_id: int = Path(ge=1),
@@ -219,13 +253,11 @@ async def remove_comment(
                          current_user: dict = Depends(authuser.get_current_user),
                          credentials: HTTPAuthorizationCredentials = Security(security)
                          ) -> Optional[Image]:  # Comment?
-
     image = await repository_images.remove_comment(comment_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
     
     return image
-
 
 
 # https://github.com/uriyyo/fastapi-pagination
