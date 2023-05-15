@@ -8,7 +8,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User, Tag
+from src.database.models import Comment, Image, User
 from src.schemas import ImageModel, CommentModel
 from src.conf.messages import *
 from src.repository import tags as repository_tags
@@ -163,11 +163,11 @@ async def update_image(
 
 # Leave a comment...
 async def add_comment(
-                     body: CommentModel,
-                     image_id: int,  # !
-                     user: dict,
-                     db: Session
-                     ) -> Optional[Image]:
+                      body: CommentModel,
+                      image_id: int,  # !
+                      user: dict,
+                      db: Session
+                      ) -> Optional[Image]:
     image: Image = db.query(Image).filter_by(id=image_id).first()
     if image:
         comment = Comment(**body.dict())  # user_id=user.get('id'), image_id=image_id =already in body (CommentModel)

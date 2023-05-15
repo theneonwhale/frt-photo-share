@@ -4,8 +4,8 @@ from fastapi.encoders import jsonable_encoder
 from libgravatar import Gravatar  # poetry add libgravatar
 from sqlalchemy.orm import Session
 
-from src.database.models import Image, User
-from src.schemas import UserModel
+from src.database.models import Image, Role, User
+from src.schemas import UserModel, UserType
 
 
 async def get_user_by_email(email: str, db: Session) -> User:
@@ -26,6 +26,9 @@ async def create_user(body: UserModel, db: Session) -> User:
         print(e)
 
     new_user: User = User(**body.dict(), avatar=avatar)
+    if db.query(User).first():
+        new_user.roles = Role.admin
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -69,7 +72,7 @@ async def get_number_of_images_per_user(email: str, db: Session) -> int:
     return db.query(Image).filter(User.email == email).count()
 
 
-async def update_user(email, body_data: UserModel, db: Session) -> Optional[User]:
+async def update_user(email, body_data: UserModel | UserType, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
     if not user:
         return None
@@ -79,6 +82,9 @@ async def update_user(email, body_data: UserModel, db: Session) -> Optional[User
     
     if not db_obj_data or not body_data:
         return None
+
+    if user.roles != Role.admin:
+        body_data.pop('roles')
 
     for field in db_obj_data:
         if field in body_data:

@@ -23,7 +23,7 @@ router = APIRouter(prefix='/images')  # tags=['images']
 # https://pypi.org/project/python-redis-rate-limit/
 @router.get(
             '/', 
-            description=f'No more than {settings.limit_crit} requests per minute.',
+            description=f'Get images.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access), 
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
@@ -45,7 +45,7 @@ async def get_images(
 
 @router.post(
             '/transformation/{image_id}',
-            description=f'transform image\nNo more than {settings.limit_crit} requests per minute',
+            description=f'Transform image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                            Depends(allowed_all_roles_access),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=60))
@@ -80,7 +80,7 @@ async def transform_image(
 
 @router.get(
             '/{image_id}',
-            description=f'No more than {settings.limit_warn} requests per minute.',
+            description=f'Get image.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
@@ -104,7 +104,7 @@ async def get_image(
 
 @router.post(
             '/',
-            description=f'No more than {settings.limit_warn} requests per minute.',
+            description=f'Create image.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access), 
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
@@ -135,7 +135,7 @@ async def create_image(
 
 @router.delete(
                '/{image_id}', 
-               description=f'No more than {settings.limit_crit} requests per minute',
+               description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
                              Depends(allowed_operation_delete), 
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
@@ -160,7 +160,7 @@ async def remove_image(
 # EDIT image...
 @router.put(
             '/{image_id}', 
-            description=f'No more than {settings.limit_crit} requests per minute',
+            description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                           Depends(allowed_operation_update), 
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
@@ -186,7 +186,7 @@ async def update_image(
 # Leave a comment... patch? post!?! addition to post-create?  ... & put? 
 @router.post(
              '/{image_id}/{user_email}', 
-             description=f'No more than {settings.limit_crit} requests per minute',
+             description=f'Add comment.\nNo more than {settings.limit_crit} requests per minute.',
              dependencies=[
                            Depends(allowed_all_roles_access), 
                            Depends(RateLimiter(times=settings.limit_crit, seconds=60))
@@ -215,7 +215,7 @@ async def add_comment(
 # EDIT comment...
 @router.put(
             '/comment/{comment_id}', 
-            description=f'No more than {settings.limit_crit} requests per minute',
+            description=f'Update comment.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                           Depends(allowed_operation_update), 
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
@@ -239,7 +239,7 @@ async def update_comment(
 
 @router.delete(
                '/comment/{coment_id}', 
-               description=f'No more than {settings.limit_crit} requests per minute',
+               description=f'Remove comment.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
                              Depends(allowed_operation_delete), 
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
