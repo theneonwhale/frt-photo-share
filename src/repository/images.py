@@ -31,7 +31,6 @@ async def get_image(
                     user: User,  # !
                     db: Session
                     ) -> Optional[Image]:
-
     return (
             db.query(Image)
             # .filter(Image.user_id == user.id)
@@ -46,7 +45,6 @@ async def create_image(
                        db: Session,
                        tags_limit: int
                        ) -> Image:
-
     tags_names = body['tags'].split()  # None? get...
     if len(tags_names) > tags_limit:  # 5
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
@@ -73,7 +71,6 @@ async def remove_image(
                        user: User,  # !
                        db: Session
                        ) -> Optional[Image]:
-
     # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
     # if user.id == Image.user_id or user.rile ...
     image: Image = db.query(Image).filter_by(id=image_id).first()
@@ -92,7 +89,6 @@ async def update_image(
                        db: Session,
                        tags_limit: int
                        ) -> Optional[Image]:
-
     # .filter(Image.id == image_id)
     image: Image = db.query(Image).filter_by(id=image_id).first()  
 
@@ -146,7 +142,6 @@ async def to_comment(
                      user: User,
                      db: Session
                      ) -> Optional[Image]:
- 
     image: Image = db.query(Image).filter_by(id=image_id).first()
     if image:
         comment = Comment(**body.dict(), user_id=user.id, image_id=image_id)  # or , user=user
@@ -157,3 +152,16 @@ async def to_comment(
         return image
 
     return None   
+
+
+async def remove_comment(
+                         comment_id: int,
+                         user: User,  # !
+                         db: Session
+                         ) -> Optional[Image]:
+    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
+    if comment:
+        db.delete(comment)
+        db.commit()
+
+    return db.query(Image).filter_by(id=comment.image_id).first()

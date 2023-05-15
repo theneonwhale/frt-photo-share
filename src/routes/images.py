@@ -171,5 +171,28 @@ async def to_comment(
     return image
 
 
+@router.delete(
+               '/{coment_id}', 
+               description=f'No more than {settings.limit_crit} requests per minute',
+               dependencies=[
+                             Depends(allowed_operation_delete), 
+                             Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                             ],
+               response_model=ImageResponse, tags=['comment']
+               )
+async def remove_comment(
+                         comment_id: int = Path(ge=1),
+                         db: Session = Depends(get_db),
+                         current_user: User = Depends(authuser.get_current_user),
+                         credentials: HTTPAuthorizationCredentials = Security(security)
+                         ) -> Optional[Image]:  # Comment?
+
+    image = await repository_images.remove_comment(comment_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+    
+    return image
+
+
 # https://github.com/uriyyo/fastapi-pagination
 add_pagination(router)
