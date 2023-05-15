@@ -6,12 +6,11 @@ from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import UserDb, UserModel
-from src.services.auth import AuthUser
+from src.services.auth import authuser
 from src.services.images import CloudImage  # cloud_image
 
 
 router = APIRouter(prefix='/users', tags=['users'])
-authuser = AuthUser()
 
 
 @router.get('/me', response_model=UserDb)  # /me/  ?
