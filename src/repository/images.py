@@ -15,7 +15,7 @@ from src.repository import tags as repository_tags
 
 
 async def get_images(
-                     user: User,  # !
+                     user: dict,  # !
                      db: Session,  # pagination_params: Page
                      pagination_params: Params
                      ) -> Page:
@@ -28,7 +28,7 @@ async def get_images(
 
 async def get_image(
                     image_id: int, 
-                    user: User,  # !
+                    user: dict,  # !
                     db: Session
                     ) -> Optional[Image]:
     return (
@@ -68,7 +68,7 @@ async def create_image(
 
 async def remove_image(
                        image_id: int,
-                       user: User,  # !
+                       user: dict,  # !
                        db: Session
                        ) -> Optional[Image]:
     # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
@@ -85,7 +85,7 @@ async def remove_image(
 async def update_image(
                        image_id: int,
                        body: ImageModel,
-                       user: User,  # !
+                       user: dict,  # !
                        db: Session,
                        tags_limit: int
                        ) -> Optional[Image]:
@@ -138,13 +138,13 @@ async def update_image(
 # Leave a comment...
 async def to_comment(
                      body: CommentModel,
-                     image_id: int,
-                     user: User,
+                     image_id: int,  # !
+                     user: dict,
                      db: Session
                      ) -> Optional[Image]:
     image: Image = db.query(Image).filter_by(id=image_id).first()
     if image:
-        comment = Comment(**body.dict(), user_id=user.id, image_id=image_id)  # or , user=user
+        comment = Comment(**body.dict())  # user_id=user.get('id'), image_id=image_id =already in body (CommentModel)
         db.add(comment)
         db.commit()
         db.refresh(comment)

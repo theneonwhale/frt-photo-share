@@ -88,8 +88,8 @@ class CommentModel(BaseModel):
     comment: str = Field(max_length=2000)
     user_id: int
     image_id: int
-    created_at: datetime
-    updated_at: datetime
+    # created_at: datetime
+    # updated_at: datetime
 
 
 class CommentResponse(CommentModel):
