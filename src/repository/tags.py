@@ -10,6 +10,7 @@ async def create_tag(name, db: Session) -> Tag:
     db.add(tag)
     db.commit()
     db.refresh(tag)
+    
     return tag
 
 

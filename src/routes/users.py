@@ -5,7 +5,7 @@ from src.conf.messages import MSC404_USER_NOT_FOUND
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserDb, UserModel
+from src.schemas import UserDb, UserModel, UserType
 from src.services.auth import authuser
 from src.services.images import CloudImage  # cloud_image
 
@@ -14,14 +14,17 @@ router = APIRouter(prefix='/users', tags=['users'])
 
 
 @router.get('/me', response_model=UserDb)  # /me/  ?
-async def read_users_me(current_user: User = Depends(authuser.get_current_user)) -> User:
-    return current_user
+async def read_users_me(
+                        current_user: dict = Depends(authuser.get_current_user),
+                        db: Session = Depends(get_db)
+                        ) -> User:
+    return repository_users.get_user_by_id(current_user.get('id'), db)
 
 
 @router.get('/about_{user_id}', response_model=UserDb)
 async def read_about_user(
                           user_id: int,
-                          current_user: User = Depends(authuser.get_current_user), 
+                          current_user: dict = Depends(authuser.get_current_user), 
                           db: Session = Depends(get_db)
                           ) -> dict:
     # ... add number of uploaded images, etc ...
@@ -43,10 +46,25 @@ async def read_about_user(
     return about_user
 
 
-@router.put(f'''/{authuser.get_current_user.get('username')}''', response_model=UserDb)
+@router.put('/{username}', response_model=UserDb)
 async def update_user_profile(
-                              body: UserModel,
-                              current_user: User = Depends(authuser.get_current_user), 
+                              username: str,  # !
+                              body: UserModel | UserType,
+                              current_user: dict = Depends(authuser.get_current_user), 
+                              db: Session = Depends(get_db)
+                              ) -> User:
+    
+    current_user = repository_users.update_user(username, body, db)
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+    
+    return current_user
+
+
+@router.put(f'''/{authuser.get_current_user.get('username')}''', response_model=UserDb)
+async def update_your_profile(
+                              body: UserModel | UserType,
+                              current_user: dict = Depends(authuser.get_current_user), 
                               db: Session = Depends(get_db)
                               ) -> User:
     
@@ -60,7 +78,7 @@ async def update_user_profile(
 @router.patch('/avatar', response_model=UserDb)
 async def update_avatar_user(
                              file: UploadFile = File(), 
-                             current_user: User = Depends(authuser.get_current_user),
+                             current_user: dict = Depends(authuser.get_current_user),
                              db: Session = Depends(get_db)
                              ) -> User:
     
