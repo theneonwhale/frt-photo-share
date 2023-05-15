@@ -41,7 +41,7 @@ async def get_image(
 
 async def create_image(
                        body: dict,
-                       user: User,
+                       user_id: int,
                        db: Session,
                        tags_limit: int
                        ) -> Image:
@@ -57,7 +57,7 @@ async def create_image(
 
         tags.append(tag)
 
-    image = Image(description=body['description'], link=body['link'], user_id=user.id, tags=tags)  # try?
+    image = Image(description=body['description'], link=body['link'], user_id=user_id, tags=tags)  # try?
 
     db.add(image)
     db.commit()
@@ -150,8 +150,6 @@ async def to_comment(
         db.refresh(comment)
 
         return image
-
-    return None   
 
 
 async def remove_comment(

@@ -34,6 +34,7 @@ async def create_user(body: UserModel, db: Session) -> User:
 
 
 async def change_password_for_user(user: User, password: str, db: Session) -> User:
+    # user: User = await get_user_by_id(user.id, db)
     user.password = password
     db.add(user)
     db.commit()
@@ -43,23 +44,25 @@ async def change_password_for_user(user: User, password: str, db: Session) -> Us
 
 
 async def update_token(user: User, token: str | None, db: Session) -> None:
+    # user: User = await get_user_by_id(user.id, db)
     user.refresh_token = token
     db.commit()
 
 
-async def confirmed_email(email: str, db: Session) -> None:
-    user: User = await get_user_by_email(email, db)
+async def confirmed_email(user: User, db: Session) -> None:
+    # user: User = await get_user_by_email(user.email, db)
     user.confirmed = True
     db.commit()
 
 
-async def update_avatar(email, url: str, db: Session) -> User:
+async def update_avatar(email, url: str, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
-    user.avatar = url
-    db.commit()
-    db.refresh(user)
-    
-    return user
+    if user:
+        user.avatar = url
+        db.commit()
+        db.refresh(user)
+        
+        return user
 
 
 async def get_number_of_images_per_user(email: str, db: Session) -> int:

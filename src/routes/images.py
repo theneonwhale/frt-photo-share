@@ -90,7 +90,7 @@ async def create_image(
             'link': src_url,
             'tags': tags
             }
-    image = await repository_images.create_image(body, current_user, db, settings.tags_limit)
+    image = await repository_images.create_image(body, current_user.id, db, settings.tags_limit)
 
     return image
 
