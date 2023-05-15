@@ -1,6 +1,7 @@
 import hashlib
 from typing import BinaryIO
 
+import qrcode
 from cloudinary import CloudinaryImage
 import cloudinary
 # from cloudinary.api import resource as res
@@ -81,4 +82,16 @@ class CloudImage:
         new_link = cloudinary.CloudinaryImage(image_name).build_url(transformation=CloudImage.filters[type.value])
         return new_link
 
+    @staticmethod
+    def get_qrcode(image: Image):
+        qr_code = qrcode.QRCode(
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=7,
+            border=4,
+        )
+        url = image.link
+        qr_code.add_data(url)
+        qr_code.make(fit=True)
+        return qr_code.make_image(fill_color="black", back_color="white")
+        return qrcode.make(url)
 cloud_image = CloudImage()

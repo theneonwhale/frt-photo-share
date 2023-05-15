@@ -27,6 +27,7 @@ fastapi-pagination = "0.11.4"
 psycopg2-binary = "^2.9.6"
 aiofile = "^3.8.5"
 aiopath = "^0.6.11"
+qrcode = "^7.4.2"
 
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.0.0"
