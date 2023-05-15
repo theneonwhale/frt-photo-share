@@ -1,9 +1,11 @@
+import io
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
 from fastapi_limiter.depends import RateLimiter
 from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
 from fastapi.security import HTTPAuthorizationCredentials
+from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
@@ -25,19 +27,19 @@ router = APIRouter(prefix='/images')  # tags=['images']
             '/', 
             description=f'Get images.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
-                          Depends(allowed_all_roles_access), 
+                          Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
                           ],
             response_model=Page, 
             tags=['all_images']
             )
 async def get_images(
-                       db: Session = Depends(get_db), 
+                       db: Session = Depends(get_db),
                        current_user: dict = Depends(authuser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security),
                        pagination_params: Params = Depends()
                        ) -> Page:
- 
+
     images = await repository_images.get_images(current_user, db, pagination_params)  # db, pagination_params
 
     return images
@@ -77,6 +79,32 @@ async def transform_image(
     return new_image
 
 
+@router.get(
+            '/qrcode/{image_id}',
+            description=f'No more than {settings.limit_crit} requests per minute',
+            dependencies=[
+                           Depends(allowed_all_roles_access),
+                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                           ],
+            tags=['image']
+            )
+async def image_qrcode(
+                        image_id: int = Path(ge=1),
+                        db: Session = Depends(get_db),
+                        current_user: dict = Depends(authuser.get_current_user),
+                        ):
+    image = await repository_images.get_image(image_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    qr_code = CloudImage.get_qrcode(image)
+    output = io.BytesIO()
+    qr_code.save(output)
+    output.seek(0)
+
+    return StreamingResponse(output, media_type="image/png")
+
+
 
 @router.get(
             '/{image_id}',
@@ -106,7 +134,7 @@ async def get_image(
             '/',
             description=f'Create image.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
-                          Depends(allowed_all_roles_access), 
+                          Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                           ],
             response_model=ImageResponse, 
