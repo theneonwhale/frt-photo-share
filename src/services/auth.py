@@ -7,6 +7,7 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
@@ -162,3 +163,9 @@ class AuthUser(AuthToken):
             raise credentials_exception  # or a special answer?
 
         return user
+
+
+authpassword = AuthPassword()
+authtoken = AuthToken()
+authuser = AuthUser()
+security = HTTPBearer()

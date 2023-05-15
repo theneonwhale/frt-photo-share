@@ -4,14 +4,17 @@ from fastapi import Depends, HTTPException, Request, status
 
 from src.database.models import Role, User
 from src.conf.messages import MSC403_FORBIDDEN
-from src.services.auth import AuthUser  # TODO
+from src.services.auth import AuthUser
+
+
+authuser = AuthUser()  # ! import from users?
 
 
 class RoleAccess:
     def __init__(self, allowed_roles: List[Role]):
         self.allowed_roles = allowed_roles
 
-    async def __call__(self, request: Request, current_user: User = Depends(AuthUser.get_current_user)):
+    async def __call__(self, request: Request, current_user: User = Depends(authuser.get_current_user)):  # AuthUser
         # To log:
         # print(request.method, request.url)
         # print(f'User role {current_user.roles}')

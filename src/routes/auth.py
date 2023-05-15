@@ -8,7 +8,7 @@ from fastapi import (
                      Request
                      )
 from fastapi.responses import HTMLResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
+from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 from sqlalchemy.orm import Session
@@ -23,15 +23,11 @@ from src.schemas import (
                          UserModel, 
                          UserResponse,                       
                         )
-from src.services.auth import AuthPassword, AuthToken, AuthUser
+from src.services.auth import authpassword, authtoken, authuser, security
 from src.services.email import send_email, send_reset_password
 
 
 router = APIRouter(prefix='/auth', tags=['auth'])
-security = HTTPBearer()
-authpassword = AuthPassword()
-authtoken = AuthToken()
-authuser = AuthUser()
 templates = Jinja2Templates(directory='src/services/templates')
 
 
