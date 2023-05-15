@@ -32,7 +32,7 @@ router = APIRouter(prefix='/images')  # tags=['images']
             )
 async def get_images(
                        db: Session = Depends(get_db), 
-                       current_user: User = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(authuser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security),
                        pagination_params: Params = Depends()
                        ) -> Page:
@@ -54,7 +54,7 @@ async def get_images(
 async def get_image(
                     image_id: int = Path(ge=1),
                     db: Session = Depends(get_db),
-                    current_user: User = Depends(authuser.get_current_user),
+                    current_user: dict = Depends(authuser.get_current_user),
                     credentials: HTTPAuthorizationCredentials = Security(security)
                     ) -> Optional[Image]:
 
@@ -79,10 +79,10 @@ async def create_image(
                       tags: str = '',
                       file: UploadFile = File(),
                       db: Session = Depends(get_db),
-                      current_user: User = Depends(authuser.get_current_user),
+                      current_user: dict = Depends(authuser.get_current_user),
                       credentials: HTTPAuthorizationCredentials = Security(security)
                       ) -> Image:
-    public_id = CloudImage.generate_name_image(current_user.email)
+    public_id = CloudImage.generate_name_image(current_user.get('email'))
     r = CloudImage.image_upload(file.file, public_id)
     src_url = CloudImage.get_url_for_image(public_id, r)
     body = {
@@ -90,7 +90,7 @@ async def create_image(
             'link': src_url,
             'tags': tags
             }
-    image = await repository_images.create_image(body, current_user, db, settings.tags_limit)
+    image = await repository_images.create_image(body, current_user.get('id'), db, settings.tags_limit)
 
     return image
 
@@ -107,7 +107,7 @@ async def create_image(
 async def remove_image(
                        image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
-                       current_user: User = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(authuser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Optional[Image]:
 
@@ -132,7 +132,7 @@ async def update_image(
                        body: ImageModel,
                        image_id: int = Path(ge=1), 
                        db: Session = Depends(get_db),
-                       current_user: User = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(authuser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Image:  
 
@@ -158,10 +158,10 @@ async def to_comment(
                      image_id: int = Path(ge=1),
                      user_email: str = Path(),  # regex... Email
                      db: Session = Depends(get_db),
-                     current_user: User = Depends(authuser.get_current_user),
+                     current_user: dict = Depends(authuser.get_current_user),
                      credentials: HTTPAuthorizationCredentials = Security(security)
                      ) -> Optional[Image]:
-    if user_email != current_user.email:
+    if user_email != current_user.get('email'):
         raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail=MSC412_IMPOSSIBLE)
     
     image = await repository_images.to_comment(body, image_id, current_user, db)
@@ -183,7 +183,7 @@ async def to_comment(
 async def remove_comment(
                          comment_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
-                         current_user: User = Depends(authuser.get_current_user),
+                         current_user: dict = Depends(authuser.get_current_user),
                          credentials: HTTPAuthorizationCredentials = Security(security)
                          ) -> Optional[Image]:  # Comment?
 

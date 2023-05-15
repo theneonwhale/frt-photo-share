@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.conf.messages import *
 from src.database.db import get_db
+from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import (
                          PasswordRecovery,
@@ -33,7 +34,7 @@ templates = Jinja2Templates(directory='src/services/templates')
 
 @router.post('/signup', response_model=UserResponse, status_code=status.HTTP_201_CREATED,
              description='Create new user')
-async def sign_up(body: UserModel, background_tasks: BackgroundTasks, request: Request, db: Session = Depends(get_db)):
+async def sign_up(body: UserModel, background_tasks: BackgroundTasks, request: Request, db: Session = Depends(get_db)) -> User:
     check_user = await repository_users.get_user_by_email(body.email, db)
     if check_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_CONFLICT)
@@ -41,11 +42,13 @@ async def sign_up(body: UserModel, background_tasks: BackgroundTasks, request: R
     body.password = authpassword.get_hash_password(body.password)
     new_user = await repository_users.create_user(body, db)
     background_tasks.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
-    return new_user
+
+    # new_user = UserResponse()    new_user... = ...   new_user... = ...
+    return new_user  # ! User or  UserResponse ? User but response_model=UserResponse
 
 
 @router.post('/login', response_model=Token)
-async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> dict:
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
@@ -60,11 +63,15 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
     refresh_token = await authtoken.create_refresh_token(data={'sub': user.email})
     await repository_users.update_token(user, refresh_token, db)
 
+    # dict ? but response_model=Token,    token = Token()    token.access_token = access_token   token.refresh_token=refresh_token ...
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
 @router.post('/refresh_token', response_model=Token)
-async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+async def refresh_token(
+                        credentials: HTTPAuthorizationCredentials = Security(security), 
+                        db: Session = Depends(get_db)
+                        ) -> dict:
     token = credentials.credentials
     email = await authtoken.refresh_token_email(token)
     user = await repository_users.get_user_by_email(email, db)
@@ -77,12 +84,13 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
     refresh_token = await authtoken.create_refresh_token(data={'sub': email})
     await repository_users.update_token(user, refresh_token, db)
 
+    # dict ? but response_model=Token,    token = Token()    token.access_token = access_token   token.refresh_token=refresh_token ...
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
-@router.post('/request_email')
+@router.post('/request_email')  # add response_model= ?
 async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
-                        db: Session = Depends(get_db)):
+                        db: Session = Depends(get_db)) -> dict:
     user = await repository_users.get_user_by_email(body.email, db)
 
     if user and user.confirmed:
@@ -94,23 +102,26 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
     return {'message': EMAIL_INFO_CONFIRMED}
 
 
-@router.get('/confirmed_email/{token}')
-async def confirmed_email(token: str, db: Session = Depends(get_db)):
-    print('======'*8)  # ? To log TODO
+@router.get('/confirmed_email/{token}')  # add response_model= ?
+async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
+    # print('======'*8)  # ?
     email = await authtoken.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=MSC400_BAD_REQUEST)
+    
     if user.confirmed:
         return {'message': EMAIL_ERROR_CONFIRMED}
-    await repository_users.confirmed_email(email, db)
+    
+    await repository_users.confirmed_email(user, db)
+
     return {'message': EMAIL_INFO_CONFIRM}
 
 
 # http://127.0.0.1:8000/api/auth/confirmed_email/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1bmZlaXJAZ21haWwuY29tIiwiaWF0IjoxNjgzODk1Mzc2LCJleHAiOjE2ODM4OTg5NzZ9.JgdgICLhyGPZyxn2fcq114Spyo0VN5rToCnNVh7fzYA
 
 
-@router.post('/reset-password')
+@router.post('/reset-password')  # add response_model= ?
 async def reset_password(
                          body: RequestEmail, 
                          background_tasks: BackgroundTasks, 
@@ -138,7 +149,7 @@ async def reset_password_done(request: Request) -> _TemplateResponse:
                                                                    'title': MSG_SENT_PASSWORD})
 
 
-@router.post('/reset-password/confirm/{token}')
+@router.post('/reset-password/confirm/{token}')  # add response_model= ?
 async def reset_password_confirm(
                                  body: PasswordRecovery,
                                  background_tasks: BackgroundTasks, 
@@ -167,7 +178,7 @@ async def reset_password_confirm(
 
 
 # users/password_reset_complete.html
-@router.get('/reset-password/complete', response_class=HTMLResponse, description='Complete password reset Page.')  
+@router.get('/reset-password/complete', response_class=HTMLResponse, description='Complete password reset Page.')
 async def reset_password_complete(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse('password_reset_complete.html', {'request': request,
                                                                        'title': MSG_PASSWORD_RESET})

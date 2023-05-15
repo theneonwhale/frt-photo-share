@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import traceback
-import pickle  # json
+# import json  # Object of type Role is not JSON serializable & True not true
+import pickle
 from typing import Optional
 
 from fastapi import HTTPException, Depends, status
@@ -111,7 +112,7 @@ class AuthToken:
 class AuthUser(AuthToken):
     redis_client = get_redis()
 
-    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=MSC401_CREDENTIALS,
@@ -134,31 +135,35 @@ class AuthUser(AuthToken):
             raise credentials_exception
         
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
-        await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
+        # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
-            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tget_user_by_email: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
-            # user = {'id': user.id,
-            #         'username': user.username,
-            #         'email': user.email,
-            #         'refresh_token': user.refresh_token,
-            #         'roles': user.roles
-            #         }
-            # json_user = json.dumps(user)
+            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tget_user_by_email: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
+
+            user = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    # 'password' : user.password,
+                    # 'created_at': user.created_at,
+                    # 'avatar': user.avatar,
+                    # 'refresh_token': user.refresh_token,
+                    'roles': user.roles,
+                    # 'confirmed': user.confirmed,
+                    'status_active': user.status_active,
+                    }
+
             if user is None:
                 raise credentials_exception
             
-            # self.redis_client.set(email, user) if self.redis_client else None
-            # self.redis_client.expire(email, 60) if self.redis_client else None
             self.redis_client.set(email, pickle.dumps(user)) if self.redis_client else None
             self.redis_client.expire(email, 90) if self.redis_client else None
 
         else:
-            # user = json.loads(user)
             user: User = pickle.loads(user)
-            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser unpacked from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
+            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser unpacked from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
 
-        if not user.status_active:
+        if not user.get('status_active'):
             await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user.status_active}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise credentials_exception  # or a special answer?
 

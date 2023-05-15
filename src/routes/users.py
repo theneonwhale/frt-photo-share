@@ -23,25 +23,34 @@ async def read_about_user(
                           user_id: int,
                           current_user: User = Depends(authuser.get_current_user), 
                           db: Session = Depends(get_db)
-                          ) -> User:  # !!! not User, = + User.number_images !! ToFix TODO
+                          ) -> dict:
     # ... add number of uploaded images, etc ...
     user = repository_users.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
     
-    user.number_images = repository_users.get_number_of_images_per_user(user.email, db)
+    about_user = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'created_at': user.created_at,
+            'avatar': user.avatar,
+            'roles': user.roles,
+            'status_active': user.status_active,
+            'number_images': repository_users.get_number_of_images_per_user(user.email, db),
+            }
     
-    return user
+    return about_user
 
 
-@router.put(f'/{authuser.get_current_user.username}', response_model=UserDb)
+@router.put(f'''/{authuser.get_current_user.get('username')}''', response_model=UserDb)
 async def update_user_profile(
                               body: UserModel,
                               current_user: User = Depends(authuser.get_current_user), 
                               db: Session = Depends(get_db)
                               ) -> User:
     
-    current_user = repository_users.update_user(current_user.email, body, db)
+    current_user = repository_users.update_user(current_user.get('email'), body, db)
     if not current_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
     
@@ -55,9 +64,9 @@ async def update_avatar_user(
                              db: Session = Depends(get_db)
                              ) -> User:
     
-    src_url = CloudImage.avatar_upload(file.file, current_user.email)
+    src_url = CloudImage.avatar_upload(file.file, current_user.get('email'))
 
-    user = await repository_users.update_avatar(current_user.email, src_url, db)
+    user = await repository_users.update_avatar(current_user.get('email'), src_url, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
 
