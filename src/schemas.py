@@ -14,6 +14,10 @@ class UserModel(BaseModel):
     password: str = Field(min_length=6, max_length=14)
 
 
+class UserType(UserModel):
+    roles: Role
+
+
 class UserDb(BaseModel):
     """Class User for DataBase."""
     id: int  # = 1

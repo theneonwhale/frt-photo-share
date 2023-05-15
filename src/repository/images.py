@@ -8,7 +8,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User, Tag
+from src.database.models import Comment, Image, User
 from src.schemas import ImageModel, CommentModel
 from src.conf.messages import *
 from src.repository import tags as repository_tags
@@ -44,7 +44,7 @@ async def create_image(
                        user_id: int,
                        db: Session,
                        tags_limit: int
-                       ) -> Image:
+                       ) -> Image | Exception:
     tags_names = body['tags'].split()  # None? get...
     if len(tags_names) > tags_limit:  # 5
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
@@ -57,7 +57,8 @@ async def create_image(
 
         tags.append(tag)
     try:
-        image = Image(description=body['description'], link=body['link'], user_id=user_id, tags=tags)  # try?
+        image = Image(description=body['description'], link=body['link'], user_id=user_id, tags=tags)
+
     except Exception as er:
         return er
 
@@ -69,13 +70,19 @@ async def create_image(
 
 
 async def transform_image(
-        body: dict,
-        user_id: int,
-        db: Session,
-        ) -> Image:
-
+                          body: dict,
+                          user_id: int,
+                          db: Session
+                          ) -> Image:
     try:
-        image = Image(description=body['description'], link=body['link'], user_id=user_id, type=body['type'], tags=body['tags'])  # try?
+        image = Image(
+                      description=body['description'], 
+                      link=body['link'], 
+                      user_id=user_id, 
+                      type=body['type'], 
+                      tags=body['tags']
+                      )
+
     except Exception as er:
         return er
 
@@ -84,6 +91,7 @@ async def transform_image(
     db.refresh(image)
 
     return image
+
 
 async def remove_image(
                        image_id: int,
@@ -110,7 +118,6 @@ async def update_image(
                        ) -> Optional[Image]:
     # .filter(Image.id == image_id)
     image: Image = db.query(Image).filter_by(id=image_id).first()  
-
     '''
     # FOR edit only description?:
     if not image or not body.description:
@@ -155,12 +162,12 @@ async def update_image(
 
 
 # Leave a comment...
-async def to_comment(
-                     body: CommentModel,
-                     image_id: int,  # !
-                     user: dict,
-                     db: Session
-                     ) -> Optional[Image]:
+async def add_comment(
+                      body: CommentModel,
+                      image_id: int,  # !
+                      user: dict,
+                      db: Session
+                      ) -> Optional[Image]:
     image: Image = db.query(Image).filter_by(id=image_id).first()
     if image:
         comment = Comment(**body.dict())  # user_id=user.get('id'), image_id=image_id =already in body (CommentModel)
@@ -169,6 +176,25 @@ async def to_comment(
         db.refresh(comment)
 
         return image
+
+
+# EDIT comment
+async def update_comment(
+                       comment_id: int,
+                       body: CommentModel,
+                       user: dict,  # !
+                       db: Session,
+                       ) -> Optional[Image]:
+    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()  
+    if not comment or not body.comment:
+        return None
+    
+    comment.comment = body.comment
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+
+    return db.query(Image).filter_by(id=comment.image_id).first()
 
 
 async def remove_comment(
@@ -182,8 +208,3 @@ async def remove_comment(
         db.commit()
 
     return db.query(Image).filter_by(id=comment.image_id).first()
-
-
-
-
-
