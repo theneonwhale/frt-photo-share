@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import List
 
 from src.conf.messages import MSC201_USER_CREATED, TOKEN_TYPE
-from src.database.models import Role
+from src.database.models import Role, TransformationsType
 
 
 class UserModel(BaseModel):
@@ -97,3 +97,7 @@ class CommentResponse(CommentModel):
 
     class Config:
         orm_mode = True
+
+
+class TransformateModel(BaseModel):
+    Type: TransformationsType

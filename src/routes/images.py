@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 from src.conf.config import settings
 from src.conf.messages import MSC404_IMAGE_NOT_FOUND, MSC412_IMPOSSIBLE
 from src.database.db import get_db
-from src.database.models import Image, User
+from src.database.models import Image, User, TransformationsType
 from src.repository import images as repository_images
 from src.schemas import ImageModel, ImageResponse, CommentModel
 from src.services.auth import authuser, security
-from src.services.images import CloudImage
+from src.services.images import CloudImage, cloud_image
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
 
@@ -42,11 +42,44 @@ async def get_images(
     return images
 
 
+@router.post(
+            '/transformation/{image_id}',
+            description=f'transform image\nNo more than {settings.limit_crit} requests per minute',
+            dependencies=[
+                           Depends(allowed_all_roles_access),
+                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                           ],
+            response_model=ImageResponse, tags=['image']
+            )
+async def transform_image(
+                        type: TransformationsType,
+                        image_id: int = Path(ge=1),
+                        db: Session = Depends(get_db),
+                        current_user: dict = Depends(authuser.get_current_user),
+                        ) -> Optional[Image]:
+    image = await repository_images.get_image(image_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    transform_image_link = CloudImage.transformation(image, type)
+
+    body = {
+        'description': image.description,
+        'link': transform_image_link,
+        'tags': image.tags,
+        'type': type.value
+    }
+    new_image = await repository_images.transform_image(body, image.user_id, db)
+
+    return new_image
+
+
+
 @router.get(
-            '/{image_id}', 
+            '/{image_id}',
             description=f'No more than {settings.limit_warn} requests per minute.',
             dependencies=[
-                          Depends(allowed_all_roles_access), 
+                          Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                           ],
             response_model=ImageResponse, tags=['image']
@@ -61,7 +94,7 @@ async def get_image(
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-    
+
     return image
 
 
@@ -82,7 +115,7 @@ async def create_image(
                       current_user: dict = Depends(authuser.get_current_user),
                       credentials: HTTPAuthorizationCredentials = Security(security)
                       ) -> Image:
-    public_id = CloudImage.generate_name_image(current_user.get('email'))
+    public_id = CloudImage.generate_name_image(current_user.get('email'), file.filename)
     r = CloudImage.image_upload(file.file, public_id)
     src_url = CloudImage.get_url_for_image(public_id, r)
     body = {
@@ -192,6 +225,7 @@ async def remove_comment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
     
     return image
+
 
 
 # https://github.com/uriyyo/fastapi-pagination

@@ -8,6 +8,7 @@ from cloudinary.uploader import upload
 from cloudinary.utils import cloudinary_url
 
 from src.conf.config import settings
+from src.database.models import Image
 
 
 class CloudImage:
@@ -19,7 +20,7 @@ class CloudImage:
     )
 
     filters = {'avatar': [
-        {'aspect_ratio': '1.0', 'gravity': 'face', 'width': 500, 'zoom': '2', 'crop': 'thumb'},
+        {'aspect_ratio': '1.0', 'gravity': 'face', 'width': 500, 'zoom': '1', 'crop': 'thumb'},
         {'radius': 'max'},
         {'color': 'brown', 'effect': 'outline'}
         ],
@@ -58,9 +59,10 @@ class CloudImage:
         return CloudImage.get_url_for_avatar(avatar_id, upload_result, clipping)
 
     @staticmethod
-    def generate_name_image(email: str):
+    def generate_name_image(email: str, filename: str):
         image_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:12]
-        return f'FRT-PHOTO-SHARE-IMAGES/{image_name}'
+        image_sufix = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:12]
+        return f'FRT-PHOTO-SHARE-IMAGES/{image_name}-{image_sufix}'
 
     @staticmethod
     def image_upload(file, public_id: str):
@@ -71,7 +73,12 @@ class CloudImage:
         src_url = cloudinary.CloudinaryImage(public_id).build_url(version=r.get('version'))
         return src_url
 
+    @staticmethod
+    def transformation(image: Image, type):
+        old_link = image.link
+        break_point = old_link.find('/upload/') + 8  # 8 symbols to end of searching word
+        image_name = old_link[break_point:] # all after /upload/ is a name like: v1/FRT-PHOTO-SHARE-IMAGES/31018336b938-09d9c77db68d
+        new_link = cloudinary.CloudinaryImage(image_name).build_url(transformation=CloudImage.filters[type.value])
+        return new_link
 
 cloud_image = CloudImage()
-# u2 =cloudinary.utils.cloudinary_url('test2_kwhfn6', transformation=cloud_image.filters['avatar'])
-# u3 =cloudinary.utils.cloudinary_url('cld-sample-5', transformation=cloud_image.filters['bg'])

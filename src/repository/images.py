@@ -56,8 +56,10 @@ async def create_image(
             tag = await repository_tags.create_tag(el, db)
 
         tags.append(tag)
-
-    image = Image(description=body['description'], link=body['link'], user_id=user_id, tags=tags)  # try?
+    try:
+        image = Image(description=body['description'], link=body['link'], user_id=user_id, tags=tags)  # try?
+    except Exception as er:
+        return er
 
     db.add(image)
     db.commit()
@@ -65,6 +67,23 @@ async def create_image(
 
     return image
 
+
+async def transform_image(
+        body: dict,
+        user_id: int,
+        db: Session,
+        ) -> Image:
+
+    try:
+        image = Image(description=body['description'], link=body['link'], user_id=user_id, type=body['type'], tags=body['tags'])  # try?
+    except Exception as er:
+        return er
+
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+
+    return image
 
 async def remove_image(
                        image_id: int,
@@ -163,3 +182,8 @@ async def remove_comment(
         db.commit()
 
     return db.query(Image).filter_by(id=comment.image_id).first()
+
+
+
+
+
