@@ -133,13 +133,11 @@ class AuthUser(AuthToken):
 
             raise credentials_exception
 
-        # looking to black list. If find - compare token with blacklist token
-        try:
-            bl_token = self.redis_client.get(f'blacklist-{email}')
-            if bl_token.decode() == token:
-                raise credentials_exception
-        except:
+        # looking to black list. If find -> raise Could not validate credentials
+        bl_token = self.redis_client.get(token)
+        if bl_token:
             raise credentials_exception
+
 
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
         # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
@@ -195,8 +193,8 @@ class AuthUser(AuthToken):
             raise credentials_exception
         now = datetime.timestamp(datetime.now())
         time_delta = payload['exp'] - now + 300 # add for some lag
-        self.redis_client.set(f'blacklist-{email}', token)
-        self.redis_client.expire(f'blacklist-{email}', int(time_delta))
+        self.redis_client.set(token, 'True')
+        self.redis_client.expire(token, int(time_delta))
 
 
 

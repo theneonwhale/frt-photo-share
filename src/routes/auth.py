@@ -70,7 +70,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
 
 @router.get("/logout", response_class=HTMLResponse)
 def logout(current_user: dict = Depends(authuser.logout_user)):
-    resp = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    resp = RedirectResponse(url="/login", status_code=status.HTTP_205_RESET_CONTENT)
     return resp
 
 
