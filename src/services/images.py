@@ -41,6 +41,7 @@ class CloudImage:
     @staticmethod
     def generate_name_avatar(email: str):
         user_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:14]
+
         return f'FRT-PHOTO-SHARE-AVATARS/{user_name}'
     
     @staticmethod
@@ -52,10 +53,10 @@ class CloudImage:
                 )
 
     @staticmethod
-    def avatar_upload(file: BinaryIO, email: str, clipping: tuple[int, int] = (120, 120)) -> str:
+    def avatar_upload(file, email: str, clipping: tuple[int, int] = (120, 120)) -> str:  # file: BinaryIO
         avatar_id = CloudImage.generate_name_avatar(email)
         # the public_id parameter is set according to the name of the current user and the FRT-PHOTO-SHARE folder:
-        upload_result = cloudinary.uploader.upload(file.file, public_id=avatar_id, overwrite=True)
+        upload_result = cloudinary.uploader.upload(file, public_id=avatar_id, overwrite=True)
 
         return CloudImage.get_url_for_avatar(avatar_id, upload_result, clipping)
 
@@ -63,6 +64,7 @@ class CloudImage:
     def generate_name_image(email: str, filename: str):
         image_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:12]
         image_sufix = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:12]
+
         return f'FRT-PHOTO-SHARE-IMAGES/{image_name}-{image_sufix}'
 
     @staticmethod
@@ -72,6 +74,7 @@ class CloudImage:
     @staticmethod
     def get_url_for_image(public_id, r):
         src_url = cloudinary.CloudinaryImage(public_id).build_url(version=r.get('version'))
+
         return src_url
 
     @staticmethod
@@ -80,6 +83,7 @@ class CloudImage:
         break_point = old_link.find('/upload/') + 8  # 8 symbols to end of searching word
         image_name = old_link[break_point:] # all after /upload/ is a name like: v1/FRT-PHOTO-SHARE-IMAGES/31018336b938-09d9c77db68d
         new_link = cloudinary.CloudinaryImage(image_name).build_url(transformation=CloudImage.filters[type.value])
+
         return new_link
 
     @staticmethod
@@ -92,6 +96,9 @@ class CloudImage:
         url = image.link
         qr_code.add_data(url)
         qr_code.make(fit=True)
+
         return qr_code.make_image(fill_color="black", back_color="white")
-        return qrcode.make(url)
+        # return qrcode.make(url)
+    
+
 cloud_image = CloudImage()

@@ -16,7 +16,7 @@ class UserModel(BaseModel):
 
 
 class UserType(UserModel):
-    roles: Role
+    roles: str = 'user'  # Role
 
 
 class UserDb(BaseModel):
@@ -26,7 +26,6 @@ class UserDb(BaseModel):
     email: str
     created_at: datetime
     avatar: str
-    number_images: int
 
     class Config:
         """Indicates that the UserDb model is used to represent the ORM model."""
@@ -43,6 +42,7 @@ class UserResponse(BaseModel):
     roles: Role
     detail: str = MSC201_USER_CREATED
     status_active: bool  # !
+    number_images: int
     
     class Config:
         orm_mode = True

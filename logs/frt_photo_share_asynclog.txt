@@ -1,1 +1,3 @@
 status: dtate time:                 Description:                            Function:
+
+3XX:	2023-05-16 20:09:42.466983	JWTError: Signature has expired.	get_current_user

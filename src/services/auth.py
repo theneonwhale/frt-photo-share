@@ -175,7 +175,7 @@ class AuthUser(AuthToken):
         return user
 
 
-    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
+    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:  # dict?
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=MSC401_CREDENTIALS,
@@ -187,15 +187,17 @@ class AuthUser(AuthToken):
                 email = payload['sub']
                 if email is None:
                     raise credentials_exception
+                
             else:
                 raise credentials_exception
+            
         except:
             raise credentials_exception
+        
         now = datetime.timestamp(datetime.now())
         time_delta = payload['exp'] - now + 300 # add for some lag
-        self.redis_client.set(token, 'True')
+        self.redis_client.set(token, 'True')  # ? only in redis
         self.redis_client.expire(token, int(time_delta))
-
 
 
 authpassword = AuthPassword()
