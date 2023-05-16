@@ -5,11 +5,12 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy import asc, desc
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User
-from src.schemas import ImageModel, CommentModel
+from src.database.models import Comment, Image, User, Tag, image_m2m_tag
+from src.schemas import ImageModel, SortDirection
 from src.conf.messages import *
 from src.repository import tags as repository_tags
 
@@ -100,7 +101,7 @@ async def remove_image(
                        ) -> Optional[Image]:
     # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
     # if user.id == Image.user_id or user.rile ...
-    image: Image = db.query(Image).filter_by(id=image_id).first()
+    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
     if image:
         db.delete(image)
         db.commit()
@@ -117,7 +118,7 @@ async def update_image(
                        tags_limit: int
                        ) -> Optional[Image]:
     # .filter(Image.id == image_id)
-    image: Image = db.query(Image).filter_by(id=image_id).first()  
+    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
     '''
     # FOR edit only description?:
     if not image or not body.description:
@@ -161,50 +162,21 @@ async def update_image(
     return image
 
 
-# Leave a comment...
-async def add_comment(
-                      body: CommentModel,
-                      image_id: int,  # !
-                      user: dict,
-                      db: Session
-                      ) -> Optional[Image]:
-    image: Image = db.query(Image).filter_by(id=image_id).first()
-    if image:
-        comment = Comment(**body.dict())  # user_id=user.get('id'), image_id=image_id =already in body (CommentModel)
-        db.add(comment)
-        db.commit()
-        db.refresh(comment)
+async def get_image_by_tag(tag, sort_direction, db):
+    image_tag = db.query(image_m2m_tag).filter_by(tag_id=tag.id).all()
+    images_id = [el[1] for el in image_tag]
+    if sort_direction.value == 'desc':
+        images = db.query(Image).filter(Image.id.in_((images_id))).order_by(desc(Image.created_at)).all()
+    else:
+        images = db.query(Image).filter(Image.id.in_((images_id))).order_by(asc(Image.created_at)).all()
 
-        return image
+    return images
 
+async def get_image_by_user(user_id, sort_direction, db):
 
-# EDIT comment
-async def update_comment(
-                       comment_id: int,
-                       body: CommentModel,
-                       user: dict,  # !
-                       db: Session,
-                       ) -> Optional[Image]:
-    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()  
-    if not comment or not body.comment:
-        return None
-    
-    comment.comment = body.comment
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
+    if sort_direction.value == 'desc':
+        images = db.query(Image).filter_by(user_id=user_id).order_by(desc(Image.created_at)).all()
+    else:
+        images = db.query(Image).filter_by(user_id=user_id).order_by(asc(Image.created_at)).all()
 
-    return db.query(Image).filter_by(id=comment.image_id).first()
-
-
-async def remove_comment(
-                         comment_id: int,
-                         user: User,  # !
-                         db: Session
-                         ) -> Optional[Image]:
-    comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
-    if comment:
-        db.delete(comment)
-        db.commit()
-
-    return db.query(Image).filter_by(id=comment.image_id).first()
+    return images

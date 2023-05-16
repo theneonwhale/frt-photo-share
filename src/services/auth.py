@@ -125,7 +125,6 @@ class AuthUser(AuthToken):
                 email = payload['sub']
                 if email is None:
                     raise credentials_exception
-                
             else:
                 raise credentials_exception
             
@@ -133,7 +132,13 @@ class AuthUser(AuthToken):
             await async_logging_to_file(f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
 
             raise credentials_exception
-        
+
+        # looking to black list. If find -> raise Could not validate credentials
+        bl_token = self.redis_client.get(token)
+        if bl_token:
+            raise credentials_exception
+
+
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
         # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
         if user is None:
@@ -168,6 +173,29 @@ class AuthUser(AuthToken):
             raise credentials_exception  # or a special answer?
 
         return user
+
+
+    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
+        credentials_exception = HTTPException(
+                                              status_code=status.HTTP_401_UNAUTHORIZED,
+                                              detail=MSC401_CREDENTIALS,
+                                              headers={'WWW-Authenticate': TOKEN_TYPE},
+                                              )
+        try:
+            payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
+            if payload['scope'] == 'access_token':
+                email = payload['sub']
+                if email is None:
+                    raise credentials_exception
+            else:
+                raise credentials_exception
+        except:
+            raise credentials_exception
+        now = datetime.timestamp(datetime.now())
+        time_delta = payload['exp'] - now + 300 # add for some lag
+        self.redis_client.set(token, 'True')
+        self.redis_client.expire(token, int(time_delta))
+
 
 
 authpassword = AuthPassword()
