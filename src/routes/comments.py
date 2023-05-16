@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Security, status
 from fastapi_limiter.depends import RateLimiter
@@ -19,6 +19,28 @@ router = APIRouter(prefix='/comment')  # tags=['images']
 
 
 # Leave a comment... patch? post!?! addition to post-create?  ... & put?
+@router.get(
+    '/{image_id}',
+    description=f'Get all comments on image.\nNo more than {settings.limit_crit} requests per minute.',
+    dependencies=[
+        Depends(allowed_all_roles_access),
+        Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+    ],
+    response_model=List[CommentResponse],
+    tags=['comment']
+)
+async def get_comments_by_image_id(
+        image_id: int = Path(ge=1),
+        db: Session = Depends(get_db),
+        current_user: dict = Depends(authuser.get_current_user),
+        credentials: HTTPAuthorizationCredentials = Security(security)
+        ) -> List[Comment]:
+    image = await repository_images.get_image(image_id, current_user, db)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    return await repository_comments.get_comments(image_id, db)
+
 @router.post(
     '/{image_id}',
     description=f'Add comment.\nNo more than {settings.limit_crit} requests per minute.',

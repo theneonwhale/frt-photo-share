@@ -56,3 +56,6 @@ async def remove_comment(
         # db.refresh(comment)
 
     return comment
+
+async def get_comments(image_id, db):
+    return db.query(Comment).filter_by(image_id=image_id).all()
