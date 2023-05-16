@@ -42,10 +42,14 @@ class UserResponse(BaseModel):
     roles: Role
     detail: str = MSC201_USER_CREATED
     status_active: bool  # !
-    number_images: int
     
     class Config:
         orm_mode = True
+
+
+class UserResponseFull(UserResponse):
+    """User full-response class."""
+    number_images: int = 0
 
 
 class TagModel(BaseModel):
