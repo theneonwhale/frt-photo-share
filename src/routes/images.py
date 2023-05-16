@@ -1,5 +1,5 @@
 import io
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
 from fastapi_limiter.depends import RateLimiter
@@ -13,7 +13,9 @@ from src.conf.messages import *
 from src.database.db import get_db
 from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
-from src.schemas import ImageModel, ImageResponse, CommentModel
+from src.repository import tags as repository_tags
+from src.repository import users as repository_users
+from src.schemas import ImageModel, ImageResponse, SortDirection
 from src.services.auth import authuser, security
 from src.services.images import CloudImage  #, cloud_image
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
@@ -213,6 +215,59 @@ async def update_image(
     return image
 
 
+@router.get(
+            '/search_bytag/{tag_name}',
+            description=f'Get images by tag.\nNo more than {settings.limit_warn} requests per minute.',
+            dependencies=[
+                          Depends(allowed_all_roles_access),
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          ],
+            response_model=List[ImageResponse],
+            tags=['image']
+            )
+async def get_image_by_tag_name(
+                    tag_name: str,
+                    sort_direction: SortDirection,
+                    db: Session = Depends(get_db),
+                    current_user: dict = Depends(authuser.get_current_user),
+                    credentials: HTTPAuthorizationCredentials = Security(security)
+                    ) -> List[Image]:
+    tag = await repository_tags.get_tag_by_name(tag_name, db)
+    if tag is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_TAG_NOT_FOUND)
+
+    images = await repository_images.get_image_by_tag(tag, sort_direction, db)
+    if images is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    return images
+
+
+@router.get(
+            '/search_byuser/{user_id}',
+            description=f'Get images by user_id.\nNo more than {settings.limit_warn} requests per minute.',
+            dependencies=[
+                          Depends(allowed_operation_delete),
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          ],
+            response_model=List[ImageResponse],
+            tags=['image']
+            )
+async def get_image_by_user(
+                    user_id: int,
+                    sort_direction: SortDirection,
+                    db: Session = Depends(get_db),
+                    current_user: dict = Depends(authuser.get_current_user),
+                    credentials: HTTPAuthorizationCredentials = Security(security)
+                    ) -> List[Image]:
+    user = await repository_users.get_user_by_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+    images = await repository_images.get_image_by_user(user_id, sort_direction, db)
+    if images is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+
+    return images
 
 
 # https://github.com/uriyyo/fastapi-pagination

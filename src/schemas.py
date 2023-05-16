@@ -1,7 +1,8 @@
+import enum
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import List
-
+from sqlalchemy import asc, desc
 from src.conf.messages import MSC201_USER_CREATED, TOKEN_TYPE
 from src.database.models import Role, TransformationsType
 
@@ -67,6 +68,8 @@ class ImageModel(BaseModel):
 
 class ImageResponse(ImageModel):
     id: int
+    created_at: datetime
+    updated_at: datetime
     tags: List[TagResponse]  # List[int]?
 
     class Config:
@@ -105,3 +108,8 @@ class CommentResponse(CommentModel):
 
 class TransformateModel(BaseModel):
     Type: TransformationsType
+
+
+class SortDirection(enum.Enum):
+    up: str = 'asc'
+    down: str = 'desc'

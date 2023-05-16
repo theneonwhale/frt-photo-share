@@ -5,11 +5,12 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy import asc, desc
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User
-from src.schemas import ImageModel, CommentModel
+from src.database.models import Comment, Image, User, Tag, image_m2m_tag
+from src.schemas import ImageModel, SortDirection
 from src.conf.messages import *
 from src.repository import tags as repository_tags
 
@@ -160,3 +161,22 @@ async def update_image(
 
     return image
 
+
+async def get_image_by_tag(tag, sort_direction, db):
+    image_tag = db.query(image_m2m_tag).filter_by(tag_id=tag.id).all()
+    images_id = [el[1] for el in image_tag]
+    if sort_direction.value == 'desc':
+        images = db.query(Image).filter(Image.id.in_((images_id))).order_by(desc(Image.created_at)).all()
+    else:
+        images = db.query(Image).filter(Image.id.in_((images_id))).order_by(asc(Image.created_at)).all()
+
+    return images
+
+async def get_image_by_user(user_id, sort_direction, db):
+
+    if sort_direction.value == 'desc':
+        images = db.query(Image).filter_by(user_id=user_id).order_by(desc(Image.created_at)).all()
+    else:
+        images = db.query(Image).filter_by(user_id=user_id).order_by(asc(Image.created_at)).all()
+
+    return images
