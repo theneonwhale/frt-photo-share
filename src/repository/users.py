@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Image, Role, User
 from src.schemas import UserModel, UserType
+from src.services.auth import authpassword
 
 
 async def get_user_by_email(email: str, db: Session) -> User:
@@ -72,7 +73,7 @@ async def get_number_of_images_per_user(email: str, db: Session) -> int:
     return db.query(Image).filter(User.email == email).count()
 
 
-async def update_user(email, body_data: UserModel | UserType, db: Session) -> Optional[User]:
+async def update_user(email, body_data: UserType, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
     if not user:
         return None
@@ -85,6 +86,12 @@ async def update_user(email, body_data: UserModel | UserType, db: Session) -> Op
 
     if user.roles != Role.admin:
         body_data.pop('roles')
+
+    else:
+        body_data['roles'] = Role.admin if body_data['roles'].lower() == 'admin' else Role.moderator if body_data['roles'].lower() == 'moderator' else Role.user
+
+    if body_data['password']:
+        body_data['password'] =  authpassword.get_hash_password(body_data['password'])
 
     for field in db_obj_data:
         if field in body_data:

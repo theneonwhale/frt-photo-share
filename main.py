@@ -12,14 +12,15 @@ import uvicorn
 from src.conf.config import settings
 from src.conf.messages import *
 from src.database.db import get_db, get_async_redis
-from src.routes import images, comments, auth
+from src.routes import auth, comments, images, users
 from src.services.asyncdevlogging import async_logging_to_file
 
 
 app = FastAPI()
 app.include_router(auth.router, prefix='/api')
-app.include_router(images.router, prefix='/api')
 app.include_router(comments.router, prefix='/api')
+app.include_router(images.router, prefix='/api')
+app.include_router(users.router, prefix='/api')
 
 
 @app.on_event('startup')
