@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, or_
 # from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
@@ -101,7 +101,11 @@ async def remove_image(
                        ) -> Optional[Image]:
     # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
     # if user.id == Image.user_id or user.rile ...
-    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
+    if user['roles'].value in ['admin', 'moderator']:
+        image: Image = db.query(Image).filter_by(id=image_id).first()
+    else:
+        image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
+
     if image:
         db.delete(image)
         db.commit()
@@ -118,7 +122,10 @@ async def update_image(
                        tags_limit: int
                        ) -> Optional[Image]:
     # .filter(Image.id == image_id)
-    image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
+    if user['roles'].value in ['admin', 'moderator']:
+        image: Image = db.query(Image).filter_by(id=image_id).first()
+    else:
+        image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
     '''
     # FOR edit only description?:
     if not image or not body.description:
