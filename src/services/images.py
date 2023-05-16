@@ -45,11 +45,11 @@ class CloudImage:
         return f'FRT-PHOTO-SHARE-AVATARS/{user_name}'
     
     @staticmethod
-    def get_url_for_avatar(public_id, res, clipping: tuple[int, int] = (120, 120)):
-            src_url = (
+    def get_url_for_avatar(public_id, res, clipping: tuple[int, int] = (120, 120)) -> str:  # src_url := 
+        return (
                 cloudinary
                 .CloudinaryImage(public_id)
-                .build_url(width=clipping[0], height=clipping[1], crop='fill', version=res(public_id).get('version'))
+                .build_url(width=clipping[0], height=clipping[1], crop='fill', version=res.get('version'))  # version=res(public_id).get('version')
                 )
 
     @staticmethod

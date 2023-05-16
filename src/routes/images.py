@@ -96,6 +96,7 @@ async def image_qrcode(
                         image_id: int = Path(ge=1),
                         db: Session = Depends(get_db),
                         current_user: dict = Depends(authuser.get_current_user),
+                        credentials: HTTPAuthorizationCredentials = Security(security),
                         ):
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:

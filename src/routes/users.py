@@ -6,7 +6,7 @@ from src.conf.messages import MSC404_USER_NOT_FOUND
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserDb, UserModel, UserResponse, UserType
+from src.schemas import UserDb, UserModel, UserResponse, UserResponseFull, UserType
 from src.services.auth import authuser, security
 from src.services.images import CloudImage  # cloud_image
 
@@ -23,7 +23,7 @@ async def read_users_me(
     return await repository_users.get_user_by_id(current_user.get('id'), db)
 
 
-@router.get('/about_{user_id}', response_model=UserResponse)
+@router.get('/about_{user_id}', response_model=UserResponseFull)
 async def read_about_user(
                           user_id: int,
                           current_user: dict = Depends(authuser.get_current_user), 
@@ -49,7 +49,7 @@ async def read_about_user(
     return about_user
 
 
-@router.put('/{username}', response_model=UserDb)
+@router.put('/{username}', response_model=UserDb)  # username = email !
 async def update_user_profile(
                               username: str,  # !
                               body: UserType,

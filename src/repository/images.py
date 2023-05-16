@@ -103,6 +103,7 @@ async def remove_image(
     # if user.id == Image.user_id or user.rile ...
     if user['roles'].value in ['admin', 'moderator']:
         image: Image = db.query(Image).filter_by(id=image_id).first()
+        
     else:
         image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
 

@@ -27,7 +27,7 @@ async def create_user(body: UserModel, db: Session) -> User:
         print(e)
 
     new_user: User = User(**body.dict(), avatar=avatar)
-    if db.query(User).first():
+    if not db.query(User).first():
         new_user.roles = Role.admin
 
     db.add(new_user)
@@ -59,7 +59,7 @@ async def confirmed_email(user: User, db: Session) -> None:
     db.commit()
 
 
-async def update_avatar(email, url: str, db: Session) -> Optional[User]:
+async def update_avatar(email: str, url: str, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
     if user:
         user.avatar = url
@@ -73,7 +73,7 @@ async def get_number_of_images_per_user(email: str, db: Session) -> int:
     return db.query(Image).filter(User.email == email).count()
 
 
-async def update_user(email, body_data: UserType, db: Session) -> Optional[User]:
+async def update_user(email: str, body_data: UserType, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
     if not user:
         return None
