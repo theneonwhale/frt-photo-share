@@ -1,9 +1,9 @@
 
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
+from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile
 from fastapi_limiter.depends import RateLimiter
-from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
+from fastapi_pagination import add_pagination, Page, Params
 from fastapi.security import HTTPAuthorizationCredentials
 from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -17,23 +17,21 @@ from src.repository import tags as repository_tags
 from src.repository import users as repository_users
 from src.schemas import ImageModel, ImageResponse, SortDirection
 from src.services.auth import authuser, security
-from src.services.images import CloudImage  #, cloud_image
+from src.services.images import CloudImage
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
 
-router = APIRouter(prefix='/images')  # tags=['images']
+router = APIRouter(prefix='/images', tags=['images'])
 
 
-# https://pypi.org/project/python-redis-rate-limit/
 @router.get(
-            '/', 
+            '/',
             description=f'Get images.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                           ],
-            response_model=Page, 
-            tags=['all_images']
+            response_model=Page
             )
 async def get_images(
                        db: Session = Depends(get_db),
@@ -42,7 +40,7 @@ async def get_images(
                        pagination_params: Params = Depends()
                        ) -> Page:
 
-    images = await repository_images.get_images(current_user, db, pagination_params)  # db, pagination_params
+    images = await repository_images.get_images(current_user, db, pagination_params)
 
     return images
 
@@ -54,8 +52,7 @@ async def get_images(
                            Depends(allowed_all_roles_access),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ],
-            response_model=ImageResponse, 
-            tags=['image']
+            response_model=ImageResponse
             )
 async def transform_image(
                         type: TransformationsType,
@@ -87,10 +84,10 @@ async def transform_image(
             '/qrcode/{image_id}',
             description=f'No more than {settings.limit_crit} requests per minute',
             dependencies=[
+
                            Depends(allowed_operation_delete),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
-                           ],
-            tags=['image']
+                           ]
             )
 async def image_qrcode(
                         image_id: int = Path(ge=1),
@@ -104,12 +101,7 @@ async def image_qrcode(
 
     qr_code = CloudImage.get_qrcode(image)
 
-
-
-
-
     return StreamingResponse(qr_code, media_type="image/png")
-
 
 
 @router.get(
@@ -119,8 +111,7 @@ async def image_qrcode(
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
-            response_model=ImageResponse, 
-            tags=['image']
+            response_model=ImageResponse
             )
 async def get_image(
                     image_id: int = Path(ge=1),
@@ -143,8 +134,7 @@ async def get_image(
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
-            response_model=ImageResponse, 
-            tags=['image']
+            response_model=ImageResponse
             )
 async def create_image(
                        description: str = '-',
@@ -168,13 +158,12 @@ async def create_image(
 
 
 @router.delete(
-               '/{image_id}', 
+               '/{image_id}',
                description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
                              Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                              ],
-               response_model=ImageResponse, 
-               tags=['image']
+               response_model=ImageResponse
                )
 async def remove_image(
                        image_id: int = Path(ge=1),
@@ -186,21 +175,16 @@ async def remove_image(
     image = await repository_images.remove_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
-    
+
     return image
 
 
-# EDIT image... 
 @router.put(
-            '/{image_id}', 
+            '/{image_id}',
             description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
-            dependencies=[
-
-                          Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
-
+            dependencies=[Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                           ],
-            response_model=ImageResponse, 
-            tags=['image']
+            response_model=ImageResponse
             )
 async def update_image(
                        body: ImageModel,
@@ -223,8 +207,7 @@ async def update_image(
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
-            response_model=List[ImageResponse],
-            tags=['image']
+            response_model=List[ImageResponse]
             )
 async def get_image_by_tag_name(
                     tag_name: str,
@@ -250,10 +233,8 @@ async def get_image_by_tag_name(
             dependencies=[
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
-
                           ],
-            response_model=List[ImageResponse],
-            tags=['image']
+            response_model=List[ImageResponse]
             )
 async def get_image_by_user(
                     user_id: int,
@@ -272,5 +253,4 @@ async def get_image_by_user(
     return images
 
 
-# https://github.com/uriyyo/fastapi-pagination
 add_pagination(router)

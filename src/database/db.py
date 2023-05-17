@@ -1,5 +1,5 @@
-import configparser
-import pathlib
+# import configparser
+# import pathlib
 
 from fastapi import HTTPException, status
 import redis
@@ -29,60 +29,37 @@ def get_db():
     except SQLAlchemyError as err:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
-    
+
     finally:
         db.close()
 
 
-def get_async_redis():
+def get_redis(is_async: bool = True):
+    module = {
+        True: aredis,
+        False: redis
+    }
+    redis_module = module[is_async]
     try:
         if settings.redis_password and settings.redis_password != '0':
-            redis_client = aredis.Redis(
-                                    host=settings.redis_host, 
-                                    port=settings.redis_port, 
-                                    db=0, 
+            redis_client = redis_module.Redis(
+                                    host=settings.redis_host,
+                                    port=settings.redis_port,
+                                    db=0,
                                     password=settings.redis_password
                                     )
-            
+
         else:
-            redis_client = aredis.Redis(
-                                    host=settings.redis_host, 
-                                    port=settings.redis_port, 
+            redis_client = redis_module.Redis(
+                                    host=settings.redis_host,
+                                    port=settings.redis_port,
                                     db=0
                                     )
-            
+
     except AuthenticationError as error:
         redis_client = None
         print(f'Authentication failed to connect to redis\n{error}')
-        
-    except Exception as error:
-        redis_client = None
-        print(f'Unable to connect to redis\n{error}')
 
-    return redis_client if redis_client else None
-
-
-def get_redis():
-    try:
-        if settings.redis_password and settings.redis_password != '0':
-            redis_client = redis.Redis(
-                                    host=settings.redis_host, 
-                                    port=settings.redis_port, 
-                                    db=0, 
-                                    password=settings.redis_password
-                                    )
-            
-        else:
-            redis_client = redis.Redis(
-                                    host=settings.redis_host, 
-                                    port=settings.redis_port, 
-                                    db=0
-                                    )
-            
-    except AuthenticationError as error:
-        redis_client = None
-        print(f'Authentication failed to connect to redis\n{error}')
-        
     except Exception as error:
         redis_client = None
         print(f'Unable to connect to redis\n{error}')

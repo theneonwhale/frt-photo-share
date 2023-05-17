@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import traceback
-# import json  # Object of type Role is not JSON serializable & True not true
 import pickle
 from typing import Optional
 
@@ -38,7 +37,7 @@ class AuthToken:
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + timedelta(expires_delta)
-            
+
         else:
             expire = datetime.utcnow() + timedelta(hours=settings.access_token_timer)
 
@@ -74,7 +73,7 @@ class AuthToken:
             email = payload['sub']
 
             return email
-        
+
         except JWTError as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -89,12 +88,12 @@ class AuthToken:
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
             else:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN_SCOPE)
-            
+
         except:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_CREDENTIALS)
 
         return email
-    
+
     async def create_password_reset_token(self, data: dict, expires_delta: Optional[float] = None):
         to_encode = data.copy()
         if expires_delta:
@@ -110,7 +109,7 @@ class AuthToken:
 
 
 class AuthUser(AuthToken):
-    redis_client = get_redis()
+    redis_client = get_redis(False)
 
     async def clear_user_cash(self, user_email):
         self.redis_client.delete(user_email)
@@ -121,7 +120,6 @@ class AuthUser(AuthToken):
                                               detail=MSC401_CREDENTIALS,
                                               headers={'WWW-Authenticate': TOKEN_TYPE},
                                               )
-
         try:
             payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
             if payload['scope'] == 'access_token':
@@ -130,7 +128,7 @@ class AuthUser(AuthToken):
                     raise credentials_exception
             else:
                 raise credentials_exception
-            
+
         except JWTError as e:
             await async_logging_to_file(f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
 
@@ -143,42 +141,36 @@ class AuthUser(AuthToken):
 
 
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
-        # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
-            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tget_user_by_email: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
 
             user = {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
-                    # 'password' : user.password,
-                    # 'created_at': user.created_at,
-                    # 'avatar': user.avatar,
-                    # 'refresh_token': user.refresh_token,
                     'roles': user.roles,
-                    # 'confirmed': user.confirmed,
                     'status_active': user.status_active,
                     }
 
             if user is None:
                 raise credentials_exception
-            
+
             self.redis_client.set(email, pickle.dumps(user)) if self.redis_client else None
             self.redis_client.expire(email, settings.redis_user_timer) if self.redis_client else None
 
         else:
             user: User = pickle.loads(user)
-            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser unpacked from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
 
         if not user.get('status_active'):
+
             # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+
 
         return user
 
 
-    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:  # dict?
+    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=MSC401_CREDENTIALS,
@@ -190,16 +182,16 @@ class AuthUser(AuthToken):
                 email = payload['sub']
                 if email is None:
                     raise credentials_exception
-                
+
             else:
                 raise credentials_exception
-            
+
         except:
             raise credentials_exception
-        
+
         now = datetime.timestamp(datetime.now())
-        time_delta = payload['exp'] - now + settings.redis_addition_lag # add for some lag
-        self.redis_client.set(token, 'True')  # ? only in redis
+        time_delta = payload['exp'] - now + settings.redis_addition_lag
+        self.redis_client.set(token, 'True')
         self.redis_client.expire(token, int(time_delta))
 
 
