@@ -125,30 +125,17 @@ async def update_image(
     # .filter(Image.id == image_id)
     if user['roles'].value in ['admin', 'moderator']:
         image: Image = db.query(Image).filter_by(id=image_id).first()
+
     else:
         image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
-    '''
-    # FOR edit only description?:
+
     if not image or not body.description:
         return None
     
     image.description = body.description
-    # setattr(image, 'description', body.description)
-    '''
-    # FOR full edit image:
-    db_obj_data: Optional[dict] = image.__dict__ if image else None
-    # db_obj_data = jsonable_encoder(image) if image else None
-    
-    body_data: Optional[dict] = jsonable_encoder(body) if body else None
-    
-    if not db_obj_data or not body_data:
-        return None
-    
-    tags_names = body.tags.split()
-    # if len(tags_names) > tags_limit:  # 5
-    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
-    tags_names = tags_names[:tags_limit]
-    
+
+    tags_names = body.tags.split()[:tags_limit]
+
     tags = []
     for el in tags_names:
         tag = await repository_tags.get_tag_by_name(el, db)
@@ -156,14 +143,11 @@ async def update_image(
             tag = await repository_tags.create_tag(el, db)
 
         tags.append(tag)
-    
-    body_data['tags'] = tags
-    for field in db_obj_data:
-        if field in body_data:
-            setattr(image, field, body_data[field]) if field != 'link' else None  # or remove from ImageModel
+
+    image.tags = tags #!!!? tags_names
+      # setattr(image, 'description', body.description)
 
     db.add(image)
-
     db.commit()
     db.refresh(image)
 
@@ -179,6 +163,7 @@ async def get_image_by_tag(tag, sort_direction, db):
         images = db.query(Image).filter(Image.id.in_((images_id))).order_by(asc(Image.created_at)).all()
 
     return images
+
 
 async def get_image_by_user(user_id, sort_direction, db):
 

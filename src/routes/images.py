@@ -171,7 +171,6 @@ async def create_image(
                '/{image_id}', 
                description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
-                             # Depends(allowed_operation_delete),
                              Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                              ],
                response_model=ImageResponse, 
@@ -191,25 +190,25 @@ async def remove_image(
     return image
 
 
-# EDIT image...
+# EDIT image... 
 @router.put(
             '/{image_id}', 
             description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
-                          # Depends(allowed_operation_update),
+
                           Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
+
                           ],
             response_model=ImageResponse, 
             tags=['image']
             )
 async def update_image(
                        body: ImageModel,
-                       image_id: int = Path(ge=1), 
+                       image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
                        current_user: dict = Depends(authuser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
-                       ) -> Image:  
-
+                       ) -> Image:
     image = await repository_images.update_image(image_id, body, current_user, db, settings.tags_limit)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
@@ -251,6 +250,7 @@ async def get_image_by_tag_name(
             dependencies=[
                           Depends(allowed_all_roles_access),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
+
                           ],
             response_model=List[ImageResponse],
             tags=['image']

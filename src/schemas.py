@@ -65,8 +65,8 @@ class TagResponse(TagModel):
 
 class ImageModel(BaseModel):
     description: str = Field(max_length=50)
-    link: str
-    user_id: int
+    # link: str
+    # user_id: int
     tags: str  # str! not List[int]
 
 
