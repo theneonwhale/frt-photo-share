@@ -20,14 +20,13 @@ from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import (
                          MessageRequest,
-                         PasswordRecovery,
                          RequestEmail,
                          Token,
                          UserModel,
                          UserResponse,
                         )
 from src.services.auth import authpassword, authtoken, authuser, security
-from src.services.email import send_email, send_reset_password
+from src.services.email import send_email, send_new_password, send_reset_password
 
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -113,7 +112,6 @@ async def request_confirm_email(body: RequestEmail, background_tasks: Background
 
 @router.get('/confirmed_email/{token}', response_model=MessageRequest)
 async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
-    # print('======'*8)  # ?
     email = await authtoken.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
@@ -127,7 +125,28 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
     return {'message': EMAIL_INFO_CONFIRM}
 
 
-@router.post('/reset-password', response_model=MessageRequest)
+@router.post('/reset-password')
+async def reset_password(
+                         body: RequestEmail, 
+                         background_tasks: BackgroundTasks, 
+                         request: Request,
+                         db: Session = Depends(get_db)
+                         ) -> dict:
+
+    user = await repository_users.get_user_by_email(body.email, db)
+    
+    if user:
+        if user.confirmed:
+            background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
+
+            return {'message': EMAIL_INFO_CONFIRMED}
+        
+        return {'message': EMAIL_INFO_CONFIRMED}
+    
+    return {'message': MSC401_EMAIL_UNKNOWN}
+
+
+@router.post('/reset-password-request')
 async def reset_password(
                          body: RequestEmail,
                          background_tasks: BackgroundTasks,
@@ -142,14 +161,13 @@ async def reset_password(
             background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
 
             return {'message': EMAIL_INFO_CONFIRMED}
-
+        
         return {'message': EMAIL_INFO_CONFIRMED}
-
+    
     return {'message': MSC401_EMAIL_UNKNOWN}
 
 
-# users/password_reset_done.html
-@router.get('/reset-password/done', response_class=HTMLResponse, description='Request password reset Page.')
+@router.get('/reset-password/done_request', response_class=HTMLResponse, description='Request password reset Page.')  
 async def reset_password_done(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse('password_reset_done.html', {'request': request,
                                                                    'title': MSG_SENT_PASSWORD})
@@ -157,27 +175,27 @@ async def reset_password_done(request: Request) -> _TemplateResponse:
 
 @router.post('/reset-password/confirm/{token}')
 async def reset_password_confirm(
-                                 body: PasswordRecovery,
-                                 background_tasks: BackgroundTasks,
+                                 background_tasks: BackgroundTasks, 
                                  request: Request,
                                  token: str,
                                  db: Session = Depends(get_db)
                                  ) -> dict:
 
-    email = await authtoken.get_email_from_token(token)
+    email: str = await authtoken.get_email_from_token(token)
     exist_user = await repository_users.get_user_by_email(email, db)
     if not exist_user:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=MSC503_UNKNOWN_USER)
-
-    body.password = authpassword.get_hash_password(body.password)
-
-    updated_user = await repository_users.change_password_for_user(exist_user, body.password, db)
+    
+    new_password: str = authpassword.get_new_password()
+    password: str = authpassword.get_hash_password(new_password)
+    
+    updated_user: User = await repository_users.change_password_for_user(exist_user, password, db)
     if updated_user is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=MSC503_UNKNOWN_USER)
 
-    background_tasks.add_task(send_email, updated_user.email, updated_user.username, request.base_url)
+    background_tasks.add_task(send_new_password, updated_user.email, updated_user.username, request.base_url, new_password)  
 
     return {'user': updated_user, 'detail': MSG_PASSWORD_CHENGED}
 

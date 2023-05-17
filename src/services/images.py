@@ -17,23 +17,24 @@ class CloudImage:
         secure=True
     )
 
-    filters = {'avatar': [
-        {'aspect_ratio': '1.0', 'gravity': 'face', 'width': 500, 'zoom': '1', 'crop': 'thumb'},
-        {'radius': 'max'},
-        {'color': 'brown', 'effect': 'outline'}
-        ],
-        'black_white': [{'effect': 'grayscale'}],
-        'delete_bg': [{'effect': 'bgremoval'}],
-        'cartoonify': [{'effect': 'cartoonify'}],
-        'oil_paint': [{'effect': 'oil_paint:100'}],
-        'vector': [{'effect': 'vectorize:colors:5:corners:40:detail:1.0'}],
-        'sepia': [{'effect': 'sepia:100'}],
-        'outline': [
-            {'width': 200, 'crop': 'scale'},
-            {'color': 'blue', 'effect': 'outline:20:200'},
-            {'color': 'yellow', 'effect': 'outline:15:200'}
-        ]
-    }
+    filters = {
+               'avatar': [
+                            {'aspect_ratio': '1.0', 'gravity': 'face', 'width': 500, 'zoom': '1', 'crop': 'thumb'},
+                            {'radius': 'max'},
+                            {'color': 'brown', 'effect': 'outline'}
+                         ],
+                        'black_white': [{'effect': 'grayscale'}],
+                        'delete_bg': [{'effect': 'bgremoval'}],
+                        'cartoonify': [{'effect': 'cartoonify'}],
+                        'oil_paint': [{'effect': 'oil_paint:100'}],
+                        'vector': [{'effect': 'vectorize:colors:5:corners:40:detail:1.0'}],
+                        'sepia': [{'effect': 'sepia:100'}],
+                        'outline': [
+                                    {'width': 200, 'crop': 'scale'},
+                                    {'color': 'blue', 'effect': 'outline:20:200'},
+                                    {'color': 'yellow', 'effect': 'outline:15:200'}
+                                    ]
+               }
 
     @staticmethod
     def generate_name_avatar(email: str):
@@ -85,10 +86,10 @@ class CloudImage:
     @staticmethod
     def get_qrcode(image: Image):
         qr_code = qrcode.QRCode(
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=7,
-            border=4,
-        )
+                                error_correction=qrcode.constants.ERROR_CORRECT_M,
+                                box_size=7,
+                                border=4,
+                                )
         url = image.link
         qr_code.add_data(url)
         qr_code.make(fit=True)
