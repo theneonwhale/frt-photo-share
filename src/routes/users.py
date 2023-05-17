@@ -37,15 +37,15 @@ async def read_user_by_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
 
     about_user = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'created_at': user.created_at,
-            'avatar': user.avatar,
-            'roles': user.roles,
-            'status_active': user.status_active,
-            'number_images': await repository_users.get_number_of_images_per_user(user.email, db),
-            }
+                  'id': user.id,
+                  'username': user.username,
+                  'email': user.email,
+                  'created_at': user.created_at,
+                  'avatar': user.avatar,
+                  'roles': user.roles,
+                  'status_active': user.status_active,
+                  'number_images': await repository_users.get_number_of_images_per_user(user.email, db),
+                  }
     
     return about_user
 
@@ -96,16 +96,18 @@ async def update_avatar_user(
     return user
 
 
-@router.patch('/ban_user', response_model=UserDb,
+@router.patch(
+              '/ban_user', response_model=UserDb,
               dependencies=[Depends(allowed_operation_delete)],
-              description='Ban/unBan user')
+              description='Ban/unBan user'
+              )
 async def bun_user(
                    user_id: int,
                    active_status: bool,
                    current_user: dict = Depends(authuser.get_current_user),
                    db: Session = Depends(get_db)
                    ):
-    user = await repository_users.bun_user(user_id, active_status, db)
+    user = await repository_users.ban_user(user_id, active_status, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
     

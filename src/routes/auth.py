@@ -20,7 +20,6 @@ from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import (
                          MessageRequest,
-                         PasswordRecovery,
                          RequestEmail,
                          Token,
                          UserModel,

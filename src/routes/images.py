@@ -18,7 +18,7 @@ from src.repository import users as repository_users
 from src.schemas import ImageModel, ImageResponse, SortDirection
 from src.services.auth import authuser, security
 from src.services.images import CloudImage
-from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
+from src.services.roles import allowed_all_roles_access, allowed_operation_delete
 
 
 router = APIRouter(prefix='/images', tags=['images'])
@@ -46,21 +46,21 @@ async def get_images(
 
 
 @router.post(
-            '/transformation/{image_id}',
-            description=f'Transform image.\nNo more than {settings.limit_crit} requests per minute.',
-            dependencies=[
+             '/transformation/{image_id}',
+             description=f'Transform image.\nNo more than {settings.limit_crit} requests per minute.',
+             dependencies=[
                            Depends(allowed_all_roles_access),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ],
-            response_model=ImageResponse
-            )
+             response_model=ImageResponse
+             )
 async def transform_image(
-                        type: TransformationsType,
-                        image_id: int = Path(ge=1),
-                        db: Session = Depends(get_db),
-                        current_user: dict = Depends(authuser.get_current_user),
-                        credentials: HTTPAuthorizationCredentials = Security(security)
-                        ) -> Optional[Image]:
+                          type: TransformationsType,
+                          image_id: int = Path(ge=1),
+                          db: Session = Depends(get_db),
+                          current_user: dict = Depends(authuser.get_current_user),
+                          credentials: HTTPAuthorizationCredentials = Security(security)
+                          ) -> Optional[Image]:
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
@@ -84,17 +84,16 @@ async def transform_image(
             '/qrcode/{image_id}',
             description=f'No more than {settings.limit_crit} requests per minute',
             dependencies=[
-
                            Depends(allowed_operation_delete),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ]
             )
 async def image_qrcode(
-                        image_id: int = Path(ge=1),
-                        db: Session = Depends(get_db),
-                        current_user: dict = Depends(authuser.get_current_user),
-                        credentials: HTTPAuthorizationCredentials = Security(security),
-                        ):
+                       image_id: int = Path(ge=1),
+                       db: Session = Depends(get_db),
+                       current_user: dict = Depends(authuser.get_current_user),
+                       credentials: HTTPAuthorizationCredentials = Security(security),
+                       ):
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
@@ -210,12 +209,12 @@ async def update_image(
             response_model=List[ImageResponse]
             )
 async def get_image_by_tag_name(
-                    tag_name: str,
-                    sort_direction: SortDirection,
-                    db: Session = Depends(get_db),
-                    current_user: dict = Depends(authuser.get_current_user),
-                    credentials: HTTPAuthorizationCredentials = Security(security)
-                    ) -> List[Image]:
+                                tag_name: str,
+                                sort_direction: SortDirection,
+                                db: Session = Depends(get_db),
+                                current_user: dict = Depends(authuser.get_current_user),
+                                credentials: HTTPAuthorizationCredentials = Security(security)
+                                ) -> List[Image]:
     tag = await repository_tags.get_tag_by_name(tag_name, db)
     if tag is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_TAG_NOT_FOUND)
@@ -237,15 +236,16 @@ async def get_image_by_tag_name(
             response_model=List[ImageResponse]
             )
 async def get_image_by_user(
-                    user_id: int,
-                    sort_direction: SortDirection,
-                    db: Session = Depends(get_db),
-                    current_user: dict = Depends(authuser.get_current_user),
-                    credentials: HTTPAuthorizationCredentials = Security(security)
-                    ) -> List[Image]:
+                            user_id: int,
+                            sort_direction: SortDirection,
+                            db: Session = Depends(get_db),
+                            current_user: dict = Depends(authuser.get_current_user),
+                            credentials: HTTPAuthorizationCredentials = Security(security)
+                            ) -> List[Image]:
     user = await repository_users.get_user_by_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+    
     images = await repository_images.get_image_by_user(user_id, sort_direction, db)
     if images is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)

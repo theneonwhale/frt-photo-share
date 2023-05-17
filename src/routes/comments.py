@@ -73,11 +73,11 @@ async def add_comment(
             response_model=CommentResponse,
              )
 async def update_comment(
-                        body: CommentModel,
-                        comment_id: int = Path(ge=1),
-                        db: Session = Depends(get_db),
-                        current_user: dict = Depends(authuser.get_current_user),
-                        credentials: HTTPAuthorizationCredentials = Security(security)
+                         body: CommentModel,
+                         comment_id: int = Path(ge=1),
+                         db: Session = Depends(get_db),
+                         current_user: dict = Depends(authuser.get_current_user),
+                         credentials: HTTPAuthorizationCredentials = Security(security)
                          ) -> Comment:
     comment = await repository_comments.update_comment(comment_id, body, current_user, db)
     if comment is None:
@@ -87,20 +87,20 @@ async def update_comment(
 
 
 @router.delete(
-            '/{comment_id}',
-            description=f'Delete comment.\nNo more than {settings.limit_crit} requests per minute.',
-            dependencies=[
-                Depends(allowed_operation_delete),
-                Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
-            ],
-            response_model=CommentResponse,
-        )
+               '/{comment_id}',
+               description=f'Delete comment.\nNo more than {settings.limit_crit} requests per minute.',
+               dependencies=[
+                             Depends(allowed_operation_delete),
+                             Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
+                             ],
+                response_model=CommentResponse,
+                )
 async def remove_comment(
-                        comment_id: int = Path(ge=1),
-                        db: Session = Depends(get_db),
-                        current_user: dict = Depends(authuser.get_current_user),
-                        credentials: HTTPAuthorizationCredentials = Security(security)
-                        ) -> Optional[Comment]:
+                         comment_id: int = Path(ge=1),
+                         db: Session = Depends(get_db),
+                         current_user: dict = Depends(authuser.get_current_user),
+                         credentials: HTTPAuthorizationCredentials = Security(security)
+                         ) -> Optional[Comment]:
     comment = await repository_comments.remove_comment(comment_id, current_user, db)
     if comment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_COMMENT_NOT_FOUND)

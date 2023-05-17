@@ -14,9 +14,11 @@ async def add_comment(
         db: Session
         ) -> Optional[Comment]:
 
-        comment = Comment(comment=body.comment,
+        comment = Comment(
+                          comment=body.comment,
                           user_id=user['id'],
-                          image_id=image_id)
+                          image_id=image_id
+                          )
         db.add(comment)
         db.commit()
         db.refresh(comment)
@@ -25,11 +27,11 @@ async def add_comment(
 
 
 async def update_comment(
-        comment_id: int,
-        body: CommentModel,
-        user: dict,
-        db: Session,
-) -> Optional[Image]:
+                         comment_id: int,
+                         body: CommentModel,
+                         user: dict,
+                         db: Session,
+                         ) -> Optional[Image]:
     comment: Comment = db.query(Comment).filter_by(id=comment_id, user_id=user['id']).first()
     if not comment or not body.comment:
         return None
