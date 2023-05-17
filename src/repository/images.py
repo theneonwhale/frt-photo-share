@@ -1,26 +1,22 @@
-# from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import asc, desc, or_
-# from sqlalchemy import cast, func, or_, String
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User, Tag, image_m2m_tag
-from src.schemas import ImageModel, SortDirection
+from src.database.models import Image, image_m2m_tag
+from src.schemas import ImageModel
 from src.conf.messages import *
 from src.repository import tags as repository_tags
 
 
 async def get_images(
                      user: dict,  # !
-                     db: Session,  # pagination_params: Page
+                     db: Session,
                      pagination_params: Params
                      ) -> Page:
-    # if user:    # .filter(Image.user_id == user.id)    # Image.updated_at & schemas...
     return paginate(
                     query=db.query(Image).order_by(Image.user_id),
                     params=pagination_params
@@ -28,13 +24,12 @@ async def get_images(
 
 
 async def get_image(
-                    image_id: int, 
+                    image_id: int,
                     user: dict,  # !
                     db: Session
                     ) -> Optional[Image]:
     return (
             db.query(Image)
-            # .filter(Image.user_id == user.id)
             .filter_by(id=image_id)
             .first()
             )
@@ -46,10 +41,10 @@ async def create_image(
                        db: Session,
                        tags_limit: int
                        ) -> Image | Exception:
-    tags_names = body['tags'].split()  # None? get...
-    if len(tags_names) > tags_limit:  # 5
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)  # cut 5?
-    
+    tags_names = body['tags'].split()
+    if len(tags_names) > tags_limit:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
+
     tags = []
     for el in tags_names:
         tag = await repository_tags.get_tag_by_name(el, db)
@@ -77,10 +72,10 @@ async def transform_image(
                           ) -> Image:
     try:
         image = Image(
-                      description=body['description'], 
-                      link=body['link'], 
-                      user_id=user_id, 
-                      type=body['type'], 
+                      description=body['description'],
+                      link=body['link'],
+                      user_id=user_id,
+                      type=body['type'],
                       tags=body['tags']
                       )
 
@@ -99,11 +94,9 @@ async def remove_image(
                        user: dict,  # !
                        db: Session
                        ) -> Optional[Image]:
-    # image = db.query(Image).filter(Image.user_id == user.id).filter_by(id=image_id).first()
-    # if user.id == Image.user_id or user.rile ...
     if user['roles'].value in ['admin', 'moderator']:
         image: Image = db.query(Image).filter_by(id=image_id).first()
-        
+
     else:
         image: Image = db.query(Image).filter_by(id=image_id, user_id=user['id']).first()
 
@@ -114,7 +107,6 @@ async def remove_image(
     return image
 
 
-# EDIT description image...
 async def update_image(
                        image_id: int,
                        body: ImageModel,
@@ -122,7 +114,6 @@ async def update_image(
                        db: Session,
                        tags_limit: int
                        ) -> Optional[Image]:
-    # .filter(Image.id == image_id)
     if user['roles'].value in ['admin', 'moderator']:
         image: Image = db.query(Image).filter_by(id=image_id).first()
 
@@ -131,7 +122,7 @@ async def update_image(
 
     if not image or not body.description:
         return None
-    
+
     image.description = body.description
 
     tags_names = body.tags.split()[:tags_limit]
@@ -144,8 +135,7 @@ async def update_image(
 
         tags.append(tag)
 
-    image.tags = tags #!!!? tags_names
-      # setattr(image, 'description', body.description)
+    image.tags = tags
 
     db.add(image)
     db.commit()
@@ -166,7 +156,6 @@ async def get_image_by_tag(tag, sort_direction, db):
 
 
 async def get_image_by_user(user_id, sort_direction, db):
-
     if sort_direction.value == 'desc':
         images = db.query(Image).filter_by(user_id=user_id).order_by(desc(Image.created_at)).all()
     else:

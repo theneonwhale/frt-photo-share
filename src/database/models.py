@@ -1,12 +1,11 @@
 import enum
 
-from sqlalchemy import Column, Boolean, Date, DateTime, Enum, ForeignKey, func, Integer, String, Table 
-from sqlalchemy.orm import relationship  #, declarative_base
+from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, func, Integer, String, Table
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
 
 from src.database.db import Base
-# Base = declarative_base()
 
 
 class Role(enum.Enum):
@@ -21,13 +20,13 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(50))
     email = Column(String(30), nullable=False, unique=True)
-    password = Column(String(255), nullable=False)  # not 14, because store hash, not password
+    password = Column(String(255), nullable=False)
     created_at = Column('crated_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now(), onupdate=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
     roles = Column('roles', Enum(Role), default=Role.user)
-    confirmed = Column(Boolean, default=False)  # whether the user's email was confirmed
+    confirmed = Column(Boolean, default=False)
     status_active = Column(Boolean, default=True)
 
 
@@ -73,7 +72,7 @@ class Tag(Base):
 class Comment(Base):
     __tablename__ = 'comments'
     id = Column(Integer, primary_key=True)
-    comment = Column(String(2000))  # set unlimited? nullable=True
+    comment = Column(String(2000))
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     user = relationship('User', backref='comments')
     image_id = Column(Integer, ForeignKey('images.id', ondelete='CASCADE'), nullable=True)

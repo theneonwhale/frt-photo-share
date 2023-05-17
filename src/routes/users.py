@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, Security, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Security, status, UploadFile, File
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -6,15 +6,15 @@ from src.conf.messages import MSC404_USER_NOT_FOUND
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserDb, UserModel, UserResponse, UserResponseFull, UserType
+from src.schemas import UserDb, UserResponseFull, UserType, UserBase
 from src.services.auth import authuser, security
-from src.services.images import CloudImage  # cloud_image
+from src.services.images import CloudImage
 
 
 router = APIRouter(prefix='/users', tags=['users'])
 
 
-@router.get('/me', response_model=UserDb)  # /me/  ?
+@router.get('/me', response_model=UserDb, name='Get user info')
 async def read_users_me(
                         current_user: dict = Depends(authuser.get_current_user),
                         credentials: HTTPAuthorizationCredentials = Security(security),
@@ -23,18 +23,17 @@ async def read_users_me(
     return await repository_users.get_user_by_id(current_user.get('id'), db)
 
 
-@router.get('/about_{user_id}', response_model=UserResponseFull)
-async def read_about_user(
+@router.get('/{user_id}', response_model=UserResponseFull, name='Get user info by id')
+async def read_user_by_id(
                           user_id: int,
-                          current_user: dict = Depends(authuser.get_current_user), 
+                          current_user: dict = Depends(authuser.get_current_user),
                           credentials: HTTPAuthorizationCredentials = Security(security),
                           db: Session = Depends(get_db)
                           ) -> dict:
-    # ... add number of uploaded images, etc ...
     user = await repository_users.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
-    
+
     about_user = {
             'id': user.id,
             'username': user.username,
@@ -49,35 +48,34 @@ async def read_about_user(
     return about_user
 
 
-@router.put('/{username}', response_model=UserDb)  # username = email !
+@router.put('/{user_id}', response_model=UserDb)
 async def update_user_profile(
-                              username: str,  # !
+                              user_id: int,
                               body: UserType,
                               current_user: dict = Depends(authuser.get_current_user),
                               credentials: HTTPAuthorizationCredentials = Security(security), 
                               db: Session = Depends(get_db)
                               ) -> User:
-    
-    current_user = await repository_users.update_user(username, body, db)
-    if not current_user:
+    user = await repository_users.update_user_profile(user_id, current_user, body, db)
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
     
-    return current_user
+    return user
 
 
-@router.put('/me/{username}', response_model=UserDb)
+@router.put('/me/{user_id}', response_model=UserDb)
 async def update_your_profile(
-                              body: UserType,
+                              user_id: int,
+                              body: UserBase,
                               current_user: dict = Depends(authuser.get_current_user), 
                               credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
                               ) -> User:
-    
-    current_user = await repository_users.update_user(current_user.get('email'), body, db)
-    if not current_user:
+    user = await repository_users.update_your_profile(current_user.get('email'), body, db)
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
     
-    return current_user
+    return user
 
 
 @router.patch('/avatar', response_model=UserDb)
@@ -87,7 +85,6 @@ async def update_avatar_user(
                              credentials: HTTPAuthorizationCredentials = Security(security),
                              db: Session = Depends(get_db)
                              ) -> User:
-    
     src_url = CloudImage.avatar_upload(file.file, current_user.get('email'))
 
     user = await repository_users.update_avatar(current_user.get('email'), src_url, db)
