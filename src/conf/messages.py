@@ -30,5 +30,3 @@ PASSWORD_RESET_REQUEST = 'Reset password.'
 MSG_PASSWORD_CHENGED = 'User`s password successfully changed.'
 MSG_PASSWORD_RESET = 'Complete password reset.'
 MSG_SENT_PASSWORD = 'Password-change email has been sent.'
-# WARNING_EMAIL = 'Check your email for confirmation.'  # EMAIL_INFO_CONFIRMED
-# WARNING_VERIFIED_EMAIL = 'Your email address has not been verified yet.'  # EMAIL_INFO_CONFIRMED

@@ -19,14 +19,13 @@ from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import (
-                         PasswordRecovery,
                          RequestEmail,
                          Token,
                          UserModel, 
                          UserResponse,                       
                         )
 from src.services.auth import authpassword, authtoken, authuser, security
-from src.services.email import send_email, send_reset_password
+from src.services.email import send_email, send_new_password, send_reset_password
 
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -44,7 +43,7 @@ async def sign_up(body: UserModel, background_tasks: BackgroundTasks, request: R
     new_user = await repository_users.create_user(body, db)
     background_tasks.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
 
-    return new_user  # ! User or  UserResponse ? User but response_model=UserResponse
+    return new_user
 
 
 @router.post('/login', response_model=Token)
@@ -93,11 +92,10 @@ async def refresh_token(
     refresh_token = await authtoken.create_refresh_token(data={'sub': email})
     await repository_users.update_token(user, refresh_token, db)
 
-    # dict ? but response_model=Token,    token = Token()    token.access_token = access_token   token.refresh_token=refresh_token ...
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
-@router.post('/request_confirm_email')  # add response_model= ?
+@router.post('/request_confirm_email')
 async def request_confirm_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
                         db: Session = Depends(get_db)) -> dict:
     user = await repository_users.get_user_by_email(body.email, db)
@@ -111,7 +109,7 @@ async def request_confirm_email(body: RequestEmail, background_tasks: Background
     return {'message': EMAIL_INFO_CONFIRMED}
 
 
-@router.get('/confirmed_email/{token}')  # add response_model= ?
+@router.get('/confirmed_email/{token}')
 async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
     # print('======'*8)  # ?
     email = await authtoken.get_email_from_token(token)
@@ -127,10 +125,7 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
     return {'message': EMAIL_INFO_CONFIRM}
 
 
-# http://127.0.0.1:8000/api/auth/confirmed_email/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1bmZlaXJAZ21haWwuY29tIiwiaWF0IjoxNjgzODk1Mzc2LCJleHAiOjE2ODM4OTg5NzZ9.JgdgICLhyGPZyxn2fcq114Spyo0VN5rToCnNVh7fzYA
-
-
-@router.post('/reset-password')  # add response_model= ?
+@router.post('/reset-password')
 async def reset_password(
                          body: RequestEmail, 
                          background_tasks: BackgroundTasks, 
@@ -144,49 +139,67 @@ async def reset_password(
         if user.confirmed:
             background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
 
-            return {'message': EMAIL_INFO_CONFIRMED}  # WARNING_EMAIL
+            return {'message': EMAIL_INFO_CONFIRMED}
         
-        return {'message': EMAIL_INFO_CONFIRMED}  # WARNING_VERIFIED_EMAIL
+        return {'message': EMAIL_INFO_CONFIRMED}
     
-    return {'message': MSC401_EMAIL_UNKNOWN}  # WARNING_ATTENTION_EMAIL
+    return {'message': MSC401_EMAIL_UNKNOWN}
 
 
-# users/password_reset_done.html
-@router.get('/reset-password/done', response_class=HTMLResponse, description='Request password reset Page.')  
+@router.post('/reset-password-request')
+async def reset_password(
+                         body: RequestEmail, 
+                         background_tasks: BackgroundTasks, 
+                         request: Request,
+                         db: Session = Depends(get_db)
+                         ) -> dict:
+
+    user = await repository_users.get_user_by_email(body.email, db)
+    
+    if user:
+        if user.confirmed:
+            background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
+
+            return {'message': EMAIL_INFO_CONFIRMED}
+        
+        return {'message': EMAIL_INFO_CONFIRMED}
+    
+    return {'message': MSC401_EMAIL_UNKNOWN}
+
+
+@router.get('/reset-password/done_request', response_class=HTMLResponse, description='Request password reset Page.')  
 async def reset_password_done(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse('password_reset_done.html', {'request': request,
                                                                    'title': MSG_SENT_PASSWORD})
 
 
-@router.post('/reset-password/confirm/{token}')  # add response_model= ?
+@router.post('/reset-password/confirm/{token}')
 async def reset_password_confirm(
-                                 body: PasswordRecovery,
                                  background_tasks: BackgroundTasks, 
                                  request: Request,
                                  token: str,
                                  db: Session = Depends(get_db)
                                  ) -> dict:
 
-    email = await authtoken.get_email_from_token(token)
+    email: str = await authtoken.get_email_from_token(token)
     exist_user = await repository_users.get_user_by_email(email, db)
     if not exist_user:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=MSC503_UNKNOWN_USER)
     
-    body.password = authpassword.get_hash_password(body.password)
+    new_password: str = authpassword.get_new_password()
+    password: str = authpassword.get_hash_password(new_password)
     
-    updated_user = await repository_users.change_password_for_user(exist_user, body.password, db)
+    updated_user: User = await repository_users.change_password_for_user(exist_user, password, db)
     if updated_user is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=MSC503_UNKNOWN_USER)
 
-    # request.base_url ->  http://127.0.0.1:8000/
-    background_tasks.add_task(send_email, updated_user.email, updated_user.username, request.base_url)  
+    background_tasks.add_task(send_new_password, updated_user.email, updated_user.username, request.base_url, new_password)  
 
     return {'user': updated_user, 'detail': MSG_PASSWORD_CHENGED}
 
 
-# users/password_reset_complete.html
 @router.get('/reset-password/complete', response_class=HTMLResponse, description='Complete password reset Page.')
 async def reset_password_complete(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse('password_reset_complete.html', {'request': request,

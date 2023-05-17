@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     limit_crit: int = 12
     limit_warn: int = 2
     tags_limit: int = 5
+    password_length: int = 12
 
     class Config:
         env_file = '.env'

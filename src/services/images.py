@@ -4,7 +4,6 @@ from typing import BinaryIO
 import qrcode
 from cloudinary import CloudinaryImage
 import cloudinary
-# from cloudinary.api import resource as res
 from cloudinary.uploader import upload
 from cloudinary.utils import cloudinary_url
 
@@ -45,17 +44,16 @@ class CloudImage:
         return f'FRT-PHOTO-SHARE-AVATARS/{user_name}'
     
     @staticmethod
-    def get_url_for_avatar(public_id, res, clipping: tuple[int, int] = (120, 120)) -> str:  # src_url := 
+    def get_url_for_avatar(public_id, res, clipping: tuple[int, int] = (120, 120)) -> str:
         return (
                 cloudinary
                 .CloudinaryImage(public_id)
-                .build_url(width=clipping[0], height=clipping[1], crop='fill', version=res.get('version'))  # version=res(public_id).get('version')
+                .build_url(width=clipping[0], height=clipping[1], crop='fill', version=res.get('version'))
                 )
 
     @staticmethod
     def avatar_upload(file, email: str, clipping: tuple[int, int] = (120, 120)) -> str:  # file: BinaryIO
         avatar_id = CloudImage.generate_name_avatar(email)
-        # the public_id parameter is set according to the name of the current user and the FRT-PHOTO-SHARE folder:
         upload_result = cloudinary.uploader.upload(file, public_id=avatar_id, overwrite=True)
 
         return CloudImage.get_url_for_avatar(avatar_id, upload_result, clipping)
@@ -80,8 +78,8 @@ class CloudImage:
     @staticmethod
     def transformation(image: Image, type):
         old_link = image.link
-        break_point = old_link.find('/upload/') + 8  # 8 symbols to end of searching word
-        image_name = old_link[break_point:] # all after /upload/ is a name like: v1/FRT-PHOTO-SHARE-IMAGES/31018336b938-09d9c77db68d
+        break_point = old_link.find('/upload/') + 8
+        image_name = old_link[break_point:]
         new_link = cloudinary.CloudinaryImage(image_name).build_url(transformation=CloudImage.filters[type.value])
 
         return new_link
@@ -98,7 +96,6 @@ class CloudImage:
         qr_code.make(fit=True)
 
         return qr_code.make_image(fill_color="black", back_color="white")
-        # return qrcode.make(url)
     
 
 cloud_image = CloudImage()

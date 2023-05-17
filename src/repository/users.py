@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
-from libgravatar import Gravatar  # poetry add libgravatar
+from libgravatar import Gravatar
 from sqlalchemy.orm import Session
 
 from src.database.models import Image, Role, User
@@ -20,8 +20,8 @@ async def get_user_by_id(id: int, db: Session) -> User:
 async def create_user(body: UserModel, db: Session) -> User:
     avatar = None
     try:
-        g = Gravatar(body.email)  # object creates based on e-mail
-        avatar = g.get_image()  # holds the avatar URL from the Gravatar API
+        g = Gravatar(body.email)
+        avatar = g.get_image()
 
     except Exception as e:
         print(e)
@@ -38,7 +38,6 @@ async def create_user(body: UserModel, db: Session) -> User:
 
 
 async def change_password_for_user(user: User, password: str, db: Session) -> User:
-    # user: User = await get_user_by_id(user.id, db)
     user.password = password
     db.add(user)
     db.commit()
@@ -48,13 +47,11 @@ async def change_password_for_user(user: User, password: str, db: Session) -> Us
 
 
 async def update_token(user: User, token: str | None, db: Session) -> None:
-    # user: User = await get_user_by_id(user.id, db)
     user.refresh_token = token
     db.commit()
 
 
 async def confirmed_email(user: User, db: Session) -> None:
-    # user: User = await get_user_by_email(user.email, db)
     user.confirmed = True
     db.commit()
 
@@ -78,7 +75,7 @@ async def update_user(email: str, body_data: UserType, db: Session) -> Optional[
     if not user:
         return None
 
-    db_obj_data: Optional[dict] = user.__dict__  # if user else None
+    db_obj_data: Optional[dict] = user.__dict__
     body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
     
     if not db_obj_data or not body_data:
@@ -95,7 +92,7 @@ async def update_user(email: str, body_data: UserType, db: Session) -> Optional[
 
     for field in db_obj_data:
         if field in body_data:
-            setattr(user, field, body_data[field])  # username, email, password ...  ! + avatar[to fix UserModel?] or separately?
+            setattr(user, field, body_data[field])
 
     db.add(user)
     db.commit()

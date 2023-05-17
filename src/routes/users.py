@@ -6,15 +6,15 @@ from src.conf.messages import MSC404_USER_NOT_FOUND
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserDb, UserModel, UserResponse, UserResponseFull, UserType
+from src.schemas import UserDb, UserResponseFull, UserType
 from src.services.auth import authuser, security
-from src.services.images import CloudImage  # cloud_image
+from src.services.images import CloudImage
 
 
 router = APIRouter(prefix='/users', tags=['users'])
 
 
-@router.get('/me', response_model=UserDb)  # /me/  ?
+@router.get('/me', response_model=UserDb)
 async def read_users_me(
                         current_user: dict = Depends(authuser.get_current_user),
                         credentials: HTTPAuthorizationCredentials = Security(security),
@@ -30,7 +30,6 @@ async def read_about_user(
                           credentials: HTTPAuthorizationCredentials = Security(security),
                           db: Session = Depends(get_db)
                           ) -> dict:
-    # ... add number of uploaded images, etc ...
     user = await repository_users.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
@@ -51,7 +50,7 @@ async def read_about_user(
 
 @router.put('/{username}', response_model=UserDb)  # username = email !
 async def update_user_profile(
-                              username: str,  # !
+                              username: str,
                               body: UserType,
                               current_user: dict = Depends(authuser.get_current_user),
                               credentials: HTTPAuthorizationCredentials = Security(security), 

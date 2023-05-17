@@ -9,7 +9,6 @@ from src.database.models import Role, TransformationsType
 
 class UserModel(BaseModel):
     """User model class."""
-    # id: int  
     username: str = Field(min_length=2, max_length=30)
     email: EmailStr
     password: str = Field(min_length=6, max_length=14)
@@ -37,11 +36,11 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    created_at: datetime  # ?
+    created_at: datetime
     avatar: str
     roles: Role
     detail: str = MSC201_USER_CREATED
-    status_active: bool  # !
+    status_active: bool
     
     class Config:
         orm_mode = True
@@ -57,7 +56,7 @@ class TagModel(BaseModel):
 
 
 class TagResponse(TagModel):
-    name: str  # ? duplicat line 46
+    name: str
 
     class Config:
         orm_mode = True
@@ -65,16 +64,14 @@ class TagResponse(TagModel):
 
 class ImageModel(BaseModel):
     description: str = Field(max_length=50)
-    # link: str
-    # user_id: int
-    tags: str  # str! not List[int]
+    tags: str
 
 
 class ImageResponse(ImageModel):
     id: int
     created_at: datetime
     updated_at: datetime
-    tags: List[TagResponse]  # List[int]?
+    tags: List[TagResponse]
 
     class Config:
         orm_mode = True
@@ -90,17 +87,13 @@ class RequestEmail(BaseModel):
     email: EmailStr
 
 
-class PasswordRecovery(BaseModel):
+class PasswordRecovery(BaseModel):  # #
     """To check the sufficiency of the password during the password recovery procedure."""
     password: str = Field(min_length=6, max_length=14)
 
 
 class CommentModel(BaseModel):
-    # user_id: int
-    # image_id: int
     comment: str = Field(max_length=2000)
-    # created_at: datetime
-    # updated_at: datetime
 
 
 class CommentResponse(CommentModel):
@@ -117,3 +110,4 @@ class TransformateModel(BaseModel):
 class SortDirection(enum.Enum):
     up: str = 'asc'
     down: str = 'desc'
+    

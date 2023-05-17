@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import traceback
-# import json  # Object of type Role is not JSON serializable & True not true
 import pickle
 from typing import Optional
 
@@ -17,16 +16,20 @@ from src.database.db import get_db, get_redis
 from src.database.models import User
 from src.repository import users as repository_users
 from src.services.asyncdevlogging import async_logging_to_file
+from src.services.generator_password import get_password
 
 
 class AuthPassword:
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-    def get_hash_password(self, password: str):
+    def get_hash_password(self, password: str) -> str:
         return self.pwd_context.hash(password)
 
-    def verify_password(self, password: str, hashed_password: str):
+    def verify_password(self, password: str, hashed_password: str) -> str:
         return self.pwd_context.verify(password, hashed_password)
+    
+    def get_new_password(self, password_length: int = settings.password_length) -> str:
+        return get_password(password_length)
 
 
 class AuthToken:
@@ -133,28 +136,20 @@ class AuthUser(AuthToken):
 
             raise credentials_exception
 
-        # looking to black list. If find -> raise Could not validate credentials
         bl_token = self.redis_client.get(token)
         if bl_token:
             raise credentials_exception
 
 
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
-        # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
-            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tget_user_by_email: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
 
             user = {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
-                    # 'password' : user.password,
-                    # 'created_at': user.created_at,
-                    # 'avatar': user.avatar,
-                    # 'refresh_token': user.refresh_token,
                     'roles': user.roles,
-                    # 'confirmed': user.confirmed,
                     'status_active': user.status_active,
                     }
 
@@ -166,16 +161,15 @@ class AuthUser(AuthToken):
 
         else:
             user: User = pickle.loads(user)
-            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tuser unpacked from redis: {user}\t{traceback.extract_stack(None, 2)[1][2]}')
 
         if not user.get('status_active'):
             await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user.status_active}\t{traceback.extract_stack(None, 2)[1][2]}')
-            raise credentials_exception  # or a special answer?
+            raise credentials_exception
 
         return user
 
 
-    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:  # dict?
+    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=MSC401_CREDENTIALS,
@@ -195,8 +189,8 @@ class AuthUser(AuthToken):
             raise credentials_exception
         
         now = datetime.timestamp(datetime.now())
-        time_delta = payload['exp'] - now + 300 # add for some lag
-        self.redis_client.set(token, 'True')  # ? only in redis
+        time_delta = payload['exp'] - now + 300
+        self.redis_client.set(token, 'True')
         self.redis_client.expire(token, int(time_delta))
 
 

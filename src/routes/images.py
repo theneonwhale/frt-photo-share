@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
 from fastapi_limiter.depends import RateLimiter
-from fastapi_pagination import add_pagination, Page, Params  # poetry add fastapi-pagination==0.11.4
+from fastapi_pagination import add_pagination, Page, Params
 from fastapi.security import HTTPAuthorizationCredentials
 from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -17,14 +17,14 @@ from src.repository import tags as repository_tags
 from src.repository import users as repository_users
 from src.schemas import ImageModel, ImageResponse, SortDirection
 from src.services.auth import authuser, security
-from src.services.images import CloudImage  #, cloud_image
+from src.services.images import CloudImage
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
 
-router = APIRouter(prefix='/images')  # tags=['images']
+router = APIRouter(prefix='/images')
 
 
-# https://pypi.org/project/python-redis-rate-limit/
+
 @router.get(
             '/', 
             description=f'Get images.\nNo more than {settings.limit_crit} requests per minute.',
@@ -42,7 +42,7 @@ async def get_images(
                        pagination_params: Params = Depends()
                        ) -> Page:
 
-    images = await repository_images.get_images(current_user, db, pagination_params)  # db, pagination_params
+    images = await repository_images.get_images(current_user, db, pagination_params)
 
     return images
 
@@ -170,7 +170,7 @@ async def create_image(
                '/{image_id}', 
                description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
-                             # Depends(allowed_operation_delete),
+                             Depends(allowed_operation_delete),
                              Depends(RateLimiter(times=settings.limit_warn, seconds=60))
                              ],
                response_model=ImageResponse, 
@@ -189,8 +189,7 @@ async def remove_image(
     
     return image
 
-
-# EDIT image... 
+ 
 @router.put(
             '/{image_id}', 
             description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
@@ -270,5 +269,4 @@ async def get_image_by_user(
     return images
 
 
-# https://github.com/uriyyo/fastapi-pagination
 add_pagination(router)

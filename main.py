@@ -4,7 +4,6 @@ from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi_limiter.depends import FastAPILimiter
-# import redis.asyncio as redis
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import uvicorn
@@ -51,15 +50,3 @@ def read_root():
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)
-
-
-# alembic init migrations
-# alembic revision --autogenerate -m 'Init'
-# alembic upgrade head
-
-# http://0.0.0.0:8000
-# http://0.0.0.0:8000/docs#
-# http://0.0.0.0:8000/api/healthchecker
-
-
-# pagination != "^0.12.3" !!! need poetry update
