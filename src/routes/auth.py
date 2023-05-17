@@ -97,8 +97,8 @@ async def refresh_token(
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
 
 
-@router.post('/request_email')  # add response_model= ?
-async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
+@router.post('/request_confirm_email')  # add response_model= ?
+async def request_confirm_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
                         db: Session = Depends(get_db)) -> dict:
     user = await repository_users.get_user_by_email(body.email, db)
 
