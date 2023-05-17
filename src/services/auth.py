@@ -111,6 +111,9 @@ class AuthToken:
 class AuthUser(AuthToken):
     redis_client = get_redis(False)
 
+    async def clear_user_cash(self, user_email):
+        self.redis_client.delete(user_email)
+
     async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
         credentials_exception = HTTPException(
                                               status_code=status.HTTP_401_UNAUTHORIZED,
@@ -159,8 +162,10 @@ class AuthUser(AuthToken):
             user: User = pickle.loads(user)
 
         if not user.get('status_active'):
-            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user.status_active}\t{traceback.extract_stack(None, 2)[1][2]}')
-            raise credentials_exception
+
+            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+
 
         return user
 

@@ -84,9 +84,10 @@ async def transform_image(
             '/qrcode/{image_id}',
             description=f'No more than {settings.limit_crit} requests per minute',
             dependencies=[
-                          Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer)),
-                          ]
+
+                           Depends(allowed_operation_delete),
+                           Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
+                           ]
             )
 async def image_qrcode(
                         image_id: int = Path(ge=1),

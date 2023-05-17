@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status, UploadF
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from src.conf.messages import MSC404_USER_NOT_FOUND
+from src.conf.messages import *
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import UserDb, UserResponseFull, UserType, UserBase
 from src.services.auth import authuser, security
-from src.services.images import CloudImage
+
+from src.services.images import CloudImage 
+from src.services.roles import allowed_operation_delete
 
 
 router = APIRouter(prefix='/users', tags=['users'])
@@ -90,5 +92,22 @@ async def update_avatar_user(
     user = await repository_users.update_avatar(current_user.get('email'), src_url, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+
+    return user
+
+
+@router.patch('/ban_user', response_model=UserDb,
+              dependencies=[Depends(allowed_operation_delete)],
+              description='Ban/unBan user')
+async def bun_user(
+        user_id: int,
+        active_status: bool,
+        current_user: dict = Depends(authuser.get_current_user),
+        db: Session = Depends(get_db)
+):
+    user = await repository_users.bun_user(user_id, active_status, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+    await authuser.clear_user_cash(user.email)
 
     return user
