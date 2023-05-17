@@ -8,17 +8,16 @@ from sqlalchemy.orm import Session
 from src.conf.config import settings
 from src.conf.messages import *
 from src.database.db import get_db
-from src.database.models import Comment, Image
+from src.database.models import Comment
 from src.repository import images as repository_images
 from src.repository import comments as repository_comments
-from src.schemas import CommentModel, CommentResponse, ImageResponse
+from src.schemas import CommentModel, CommentResponse
 from src.services.auth import authuser, security
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
-router = APIRouter(prefix='/comment')  # tags=['images']
+router = APIRouter(prefix='/comment', tags=['comments'])
 
 
-# Leave a comment... patch? post!?! addition to post-create?  ... & put?
 @router.get(
     '/{image_id}',
     description=f'Get all comments on image.\nNo more than {settings.limit_crit} requests per minute.',
@@ -27,7 +26,6 @@ router = APIRouter(prefix='/comment')  # tags=['images']
         Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
     ],
     response_model=List[CommentResponse],
-    tags=['comment']
 )
 async def get_comments_by_image_id(
         image_id: int = Path(ge=1),
@@ -49,12 +47,10 @@ async def get_comments_by_image_id(
         Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
     ],
     response_model=CommentResponse,
-    tags=['comment']
 )
 async def add_comment(
         body: CommentModel,
         image_id: int = Path(ge=1),
-        # user_email: str = Path(),  # regex... Email
         db: Session = Depends(get_db),
         current_user: dict = Depends(authuser.get_current_user),
         credentials: HTTPAuthorizationCredentials = Security(security)
@@ -66,7 +62,6 @@ async def add_comment(
     return comment
 
 
-# EDIT comment...
 @router.put(
             '/{comment_id}',
             description=f'Update comment.\nNo more than {settings.limit_crit} requests per minute.',
@@ -75,7 +70,6 @@ async def add_comment(
                 Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
             ],
             response_model=CommentResponse,
-            tags=['comment']
              )
 async def update_comment(
                         body: CommentModel,
@@ -99,14 +93,13 @@ async def update_comment(
                 Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
             ],
             response_model=CommentResponse,
-            tags=['comment']
         )
 async def remove_comment(
-                        comment_id: int, # = Path(ge=1),
+                        comment_id: int = Path(ge=1),
                         db: Session = Depends(get_db),
                         current_user: dict = Depends(authuser.get_current_user),
                         credentials: HTTPAuthorizationCredentials = Security(security)
-                        ) -> Optional[Comment]:  # Comment?
+                        ) -> Optional[Comment]:
     comment = await repository_comments.remove_comment(comment_id, current_user, db)
     if comment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_COMMENT_NOT_FOUND)
