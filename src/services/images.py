@@ -1,4 +1,5 @@
 import hashlib
+import io
 from typing import BinaryIO
 
 import qrcode
@@ -96,8 +97,12 @@ class CloudImage:
         url = image.link
         qr_code.add_data(url)
         qr_code.make(fit=True)
+        img = qr_code.make_image(fill_color="black", back_color="white")
+        output = io.BytesIO()
+        img.save(output)
+        output.seek(0)
 
-        return qr_code.make_image(fill_color="black", back_color="white")
+        return output
         # return qrcode.make(url)
     
 

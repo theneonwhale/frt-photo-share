@@ -40,7 +40,7 @@ class AuthToken:
             expire = datetime.utcnow() + timedelta(expires_delta)
             
         else:
-            expire = datetime.utcnow() + timedelta(hours=1)
+            expire = datetime.utcnow() + timedelta(hours=settings.access_token_timer)
 
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'access_token'})
         access_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
@@ -53,7 +53,7 @@ class AuthToken:
             expire = datetime.utcnow() + timedelta(expires_delta)
 
         else:
-            expire = datetime.utcnow() + timedelta(days=7)
+            expire = datetime.utcnow() + timedelta(days=settings.refresh_token_timer)
 
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'refresh_token'})
         refresh_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
@@ -62,7 +62,7 @@ class AuthToken:
 
     async def create_email_token(self, data: dict):
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(hours=1)
+        expire = datetime.utcnow() + timedelta(hours=settings.email_token_timer)
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire})
         token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
 
@@ -101,7 +101,7 @@ class AuthToken:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
 
         else:
-            expire = datetime.utcnow() + timedelta(minutes=25)
+            expire = datetime.utcnow() + timedelta(minutes=settings.password_reset_token_timer)
 
         to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'password_reset_token'})
         encoded_password_reset_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
@@ -162,7 +162,7 @@ class AuthUser(AuthToken):
                 raise credentials_exception
             
             self.redis_client.set(email, pickle.dumps(user)) if self.redis_client else None
-            self.redis_client.expire(email, 90) if self.redis_client else None
+            self.redis_client.expire(email, settings.redis_user_timer) if self.redis_client else None
 
         else:
             user: User = pickle.loads(user)
@@ -195,7 +195,7 @@ class AuthUser(AuthToken):
             raise credentials_exception
         
         now = datetime.timestamp(datetime.now())
-        time_delta = payload['exp'] - now + 300 # add for some lag
+        time_delta = payload['exp'] - now + settings.redis_addition_lag # add for some lag
         self.redis_client.set(token, 'True')  # ? only in redis
         self.redis_client.expire(token, int(time_delta))
 

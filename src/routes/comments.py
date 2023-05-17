@@ -24,7 +24,7 @@ router = APIRouter(prefix='/comment')  # tags=['images']
     description=f'Get all comments on image.\nNo more than {settings.limit_crit} requests per minute.',
     dependencies=[
         Depends(allowed_all_roles_access),
-        Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+        Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
     ],
     response_model=List[CommentResponse],
     tags=['comment']
@@ -46,7 +46,7 @@ async def get_comments_by_image_id(
     description=f'Add comment.\nNo more than {settings.limit_crit} requests per minute.',
     dependencies=[
         Depends(allowed_all_roles_access),
-        Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+        Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
     ],
     response_model=CommentResponse,
     tags=['comment']
@@ -72,7 +72,7 @@ async def add_comment(
             description=f'Update comment.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                 Depends(allowed_operation_update),
-                Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
             ],
             response_model=CommentResponse,
             tags=['comment']
@@ -96,7 +96,7 @@ async def update_comment(
             description=f'Delete comment.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                 Depends(allowed_operation_delete),
-                Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
             ],
             response_model=CommentResponse,
             tags=['comment']

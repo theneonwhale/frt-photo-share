@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     limit_crit: int = 12
     limit_warn: int = 2
     tags_limit: int = 5
+    limit_crit_timer: int = 60 # seconds
+    access_token_timer: int = 1 # hours
+    refresh_token_timer: int = 7 # days
+    email_token_timer: int = 1 # hours
+    password_reset_token_timer: int = 25 # minutes
+    redis_user_timer: int = 3600 # seconds
+    redis_addition_lag: int = 300
 
     class Config:
         env_file = '.env'

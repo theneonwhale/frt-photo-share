@@ -1,4 +1,4 @@
-import io
+
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, status, UploadFile 
@@ -30,7 +30,7 @@ router = APIRouter(prefix='/images')  # tags=['images']
             description=f'Get images.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                          Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                           ],
             response_model=Page, 
             tags=['all_images']
@@ -52,7 +52,7 @@ async def get_images(
             description=f'Transform image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
                            Depends(allowed_all_roles_access),
-                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                           Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ],
             response_model=ImageResponse, 
             tags=['image']
@@ -88,7 +88,7 @@ async def transform_image(
             description=f'No more than {settings.limit_crit} requests per minute',
             dependencies=[
                            Depends(allowed_all_roles_access),
-                           Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+                           Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ],
             tags=['image']
             )
@@ -103,11 +103,12 @@ async def image_qrcode(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
 
     qr_code = CloudImage.get_qrcode(image)
-    output = io.BytesIO()
-    qr_code.save(output)
-    output.seek(0)
 
-    return StreamingResponse(output, media_type="image/png")
+
+
+
+
+    return StreamingResponse(qr_code, media_type="image/png")
 
 
 
@@ -116,7 +117,7 @@ async def image_qrcode(
             description=f'Get image.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
             response_model=ImageResponse, 
             tags=['image']
@@ -140,7 +141,7 @@ async def get_image(
             description=f'Create image.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
             response_model=ImageResponse, 
             tags=['image']
@@ -170,8 +171,7 @@ async def create_image(
                '/{image_id}', 
                description=f'Remove image.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
-                             # Depends(allowed_operation_delete),
-                             Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                             Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                              ],
                response_model=ImageResponse, 
                tags=['image']
@@ -195,8 +195,9 @@ async def remove_image(
             '/{image_id}', 
             description=f'Update image.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
-                          Depends(allowed_operation_update),
-                          Depends(RateLimiter(times=settings.limit_crit, seconds=60))
+
+                          Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
+
                           ],
             response_model=ImageResponse, 
             tags=['image']
@@ -220,7 +221,7 @@ async def update_image(
             description=f'Get images by tag.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
             response_model=List[ImageResponse],
             tags=['image']
@@ -248,7 +249,8 @@ async def get_image_by_tag_name(
             description=f'Get images by user_id.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
                           Depends(allowed_all_roles_access),
-                          Depends(RateLimiter(times=settings.limit_warn, seconds=60))
+                          Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
+
                           ],
             response_model=List[ImageResponse],
             tags=['image']

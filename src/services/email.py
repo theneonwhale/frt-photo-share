@@ -28,7 +28,7 @@ conf = ConnectionConfig(
 async def send_email(email: EmailStr, username: str, host: str):
     try:
         token_verification = await auth.create_email_token({'sub': email})
-        mail_subject=EMAIL_CONFIRMATION_REQUEST
+        mail_subject = EMAIL_CONFIRMATION_REQUEST
         message = MessageSchema(
             subject=mail_subject,
             recipients=[email],
