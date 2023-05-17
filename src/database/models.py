@@ -1,13 +1,12 @@
 import enum
 
 from sqlalchemy import Column, Boolean, Date, DateTime, Enum, ForeignKey, func, Integer, String, Table 
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship  #, declarative_base
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
 
-
-# from src.database.db import Base
-Base = declarative_base()
+from src.database.db import Base
+# Base = declarative_base()
 
 
 class Role(enum.Enum):
@@ -47,7 +46,7 @@ class TransformationsType(enum.Enum):
 image_m2m_tag = Table('image_m2m_tag',
                       Base.metadata,
                       Column('id', Integer, primary_key=True),
-                      Column('image_d', Integer, ForeignKey('images.id', ondelete='CASCADE')),
+                      Column('image_id', Integer, ForeignKey('images.id', ondelete='CASCADE')),
                       Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'))
                       )
 
@@ -81,9 +80,3 @@ class Comment(Base):
     image = relationship('Image', backref='comments')
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
-
-# alembic init migrations
-# migrations/env.py ... set
-# alembic revision --autogenerate -m 'Init'
-# alembic upgrade head

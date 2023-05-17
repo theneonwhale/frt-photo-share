@@ -6,7 +6,7 @@ import redis
 import redis.asyncio as aredis
 from redis.exceptions import AuthenticationError
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import  declarative_base, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.conf.config import settings
@@ -17,6 +17,7 @@ URI = settings.sqlalchemy_database_url
 
 engine = create_engine(URI, echo=True)
 DBSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+Base = declarative_base()
 
 
 # Dependency
