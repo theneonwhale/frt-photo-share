@@ -4,10 +4,10 @@ from fastapi import Depends, HTTPException, Request, status
 
 from src.database.models import Role, User
 from src.conf.messages import MSC403_FORBIDDEN
-from src.services.auth import AuthUser
+from src.services.auth import authuser
 
 
-authuser = AuthUser()  # ! import from users?
+# authuser = AuthUser()  # ! import from users?
 
 
 class RoleAccess:

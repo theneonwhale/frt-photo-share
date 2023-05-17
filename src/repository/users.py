@@ -91,7 +91,7 @@ async def update_user(email: str, body_data: UserType, db: Session) -> Optional[
         body_data['roles'] = Role.admin if body_data['roles'].lower() == 'admin' else Role.moderator if body_data['roles'].lower() == 'moderator' else Role.user
 
     if body_data['password']:
-        body_data['password'] =  authpassword.get_hash_password(body_data['password'])
+        body_data['password'] = authpassword.get_hash_password(body_data['password'])
 
     for field in db_obj_data:
         if field in body_data:
