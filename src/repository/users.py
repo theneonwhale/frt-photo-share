@@ -1,5 +1,6 @@
 from typing import Optional
 
+from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from libgravatar import Gravatar  # poetry add libgravatar
 from sqlalchemy.orm import Session
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 from src.database.models import Image, Role, User
 from src.schemas import UserModel, UserType
 from src.services.auth import authpassword
+from src.conf.messages import *
 
 
 async def get_user_by_email(email: str, db: Session) -> User:
@@ -102,3 +104,18 @@ async def update_user(email: str, body_data: UserType, db: Session) -> Optional[
     db.refresh(user)
     
     return user
+
+
+
+async def bun_user(user_id, active_status, db):
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        return None
+    if user.roles.value == 'admin':
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+    user.status_active = active_status
+    db.commit()
+    db.refresh(user)
+    return user
+
+
