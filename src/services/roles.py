@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import Depends, HTTPException, Request, status
 
-from src.database.models import Role, User
+from src.database.models import Role
 from src.conf.messages import MSC403_FORBIDDEN
 from src.services.auth import authuser
 

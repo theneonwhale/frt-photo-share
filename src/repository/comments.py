@@ -9,7 +9,7 @@ from src.conf.messages import *
 
 async def add_comment(
         body: CommentModel,
-        image_id: int,  # !
+        image_id: int,
         user: dict,
         db: Session
         ) -> Optional[Comment]:
@@ -43,10 +43,10 @@ async def update_comment(
 
 
 async def remove_comment(
-        comment_id: int,
-        user: User,  # !
-        db: Session
-) -> Optional[Image]:
+                         comment_id: int,
+                         user: User,
+                         db: Session
+                         ) -> Optional[Image]:
     comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
     if comment:
         db.delete(comment)
@@ -54,6 +54,7 @@ async def remove_comment(
         db.refresh(comment)
 
     return comment
+
 
 async def get_comments(image_id, db):
     return db.query(Comment).filter_by(image_id=image_id).all()

@@ -6,10 +6,9 @@ from pydantic import EmailStr
 
 from src.conf.config import settings
 from src.conf.messages import EMAIL_CONFIRMATION_REQUEST, PASSWORD_RESET_REQUEST
-from src.services.auth import AuthToken
+from src.services.auth import authtoken as auth
 
 
-auth = AuthToken()
 conf = ConnectionConfig(
                         MAIL_USERNAME=settings.mail_username,
                         MAIL_PASSWORD=settings.mail_password,
@@ -44,6 +43,28 @@ async def send_email(email: EmailStr, username: str, host: str):
         fm = FastMail(conf)
         await fm.send_message(message, template_name='email_template.html')
 
+    except ConnectionErrors as err:
+        print(err)
+
+
+async def send_new_password(email: EmailStr, username: str, host: str, password: str):
+    subject = 'New password'
+    try:
+        message = MessageSchema(
+            subject=PASSWORD_RESET_REQUEST,
+            recipients=[email],
+            template_body={
+                           'subject': subject,
+                           'host': host, 
+                           'username': username, 
+                           'new_password': password,
+                           },
+            subtype=MessageType.html
+            )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name='new_password.html')
+        
     except ConnectionErrors as err:
         print(err)
 

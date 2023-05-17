@@ -13,7 +13,7 @@ from src.repository import tags as repository_tags
 
 
 async def get_images(
-                     user: dict,  # !
+                     user: dict,
                      db: Session,
                      pagination_params: Params
                      ) -> Page:
@@ -24,8 +24,8 @@ async def get_images(
 
 
 async def get_image(
-                    image_id: int,
-                    user: dict,  # !
+                    image_id: int, 
+                    user: dict,
                     db: Session
                     ) -> Optional[Image]:
     return (
@@ -44,7 +44,7 @@ async def create_image(
     tags_names = body['tags'].split()
     if len(tags_names) > tags_limit:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
-
+    
     tags = []
     for el in tags_names:
         tag = await repository_tags.get_tag_by_name(el, db)
@@ -91,7 +91,7 @@ async def transform_image(
 
 async def remove_image(
                        image_id: int,
-                       user: dict,  # !
+                       user: dict,
                        db: Session
                        ) -> Optional[Image]:
     if user['roles'].value in ['admin', 'moderator']:
@@ -110,7 +110,7 @@ async def remove_image(
 async def update_image(
                        image_id: int,
                        body: ImageModel,
-                       user: dict,  # !
+                       user: dict,
                        db: Session,
                        tags_limit: int
                        ) -> Optional[Image]:
@@ -149,6 +149,7 @@ async def get_image_by_tag(tag, sort_direction, db):
     images_id = [el[1] for el in image_tag]
     if sort_direction.value == 'desc':
         images = db.query(Image).filter(Image.id.in_((images_id))).order_by(desc(Image.created_at)).all()
+
     else:
         images = db.query(Image).filter(Image.id.in_((images_id))).order_by(asc(Image.created_at)).all()
 
@@ -158,6 +159,7 @@ async def get_image_by_tag(tag, sort_direction, db):
 async def get_image_by_user(user_id, sort_direction, db):
     if sort_direction.value == 'desc':
         images = db.query(Image).filter_by(user_id=user_id).order_by(desc(Image.created_at)).all()
+
     else:
         images = db.query(Image).filter_by(user_id=user_id).order_by(asc(Image.created_at)).all()
 

@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     redis_user_timer: int = 3600 # seconds
     redis_addition_lag: int = 300
     break_point: int = 8
+    password_length: int = 12
 
     class Config:
         env_file = '.env'

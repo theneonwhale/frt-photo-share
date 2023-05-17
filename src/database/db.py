@@ -20,7 +20,6 @@ DBSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
-# Dependency
 def get_db():
     db = DBSession()
     try:

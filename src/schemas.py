@@ -46,7 +46,7 @@ class UserResponse(BaseModel):
     roles: Role
     detail: str = MSC201_USER_CREATED
     status_active: bool
-
+    
     class Config:
         orm_mode = True
 
@@ -88,7 +88,7 @@ class RequestEmail(BaseModel):
     email: EmailStr
 
 
-class PasswordRecovery(BaseModel):
+class PasswordRecovery(BaseModel):  # #
     """To check the sufficiency of the password during the password recovery procedure."""
     password: str = Field(min_length=6, max_length=14)
 

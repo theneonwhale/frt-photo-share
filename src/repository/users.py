@@ -77,10 +77,12 @@ async def update_user_profile(user_id: int, current_user: dict, body_data: UserT
     user: User = await get_user_by_id(user_id, db)
     if not user:
         return None
+    
     db_obj_data: Optional[dict] = user.__dict__
     body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
     if user_id == current_user['id'] and body_data['roles'] != 'admin' and not db.query(User).filter(User.roles == Role.admin):
         body_data.pop('roles')
+
     else:
         role_mapping = {
             'admin': Role.admin,
@@ -88,12 +90,15 @@ async def update_user_profile(user_id: int, current_user: dict, body_data: UserT
             'user': Role.user
         }
         body_data['roles'] = role_mapping.get(body_data['roles'].lower(), Role.user)
+
     for field in db_obj_data:
         if field in body_data:
             setattr(user, field, body_data[field])
+            
     db.add(user)
     db.commit()
     db.refresh(user)
+
     return user
 
 
@@ -101,29 +106,33 @@ async def update_your_profile(email: str, body_data: UserBase, db: Session) -> O
     user: User = await get_user_by_email(email, db)
     if not user:
         return None
+    
     db_obj_data: Optional[dict] = user.__dict__
     body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
     if not db_obj_data or not body_data:
         return None
+    
     for field in db_obj_data:
         if field in body_data:
             setattr(user, field, body_data[field])
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
 
+    return user
 
 
 async def bun_user(user_id, active_status, db):
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return None
+    
     if user.roles.value == 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+    
     user.status_active = active_status
     db.commit()
     db.refresh(user)
+
     return user
-
-

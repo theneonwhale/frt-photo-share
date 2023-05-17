@@ -16,16 +16,20 @@ from src.database.db import get_db, get_redis
 from src.database.models import User
 from src.repository import users as repository_users
 from src.services.asyncdevlogging import async_logging_to_file
+from src.services.generator_password import get_password
 
 
 class AuthPassword:
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-    def get_hash_password(self, password: str):
+    def get_hash_password(self, password: str) -> str:
         return self.pwd_context.hash(password)
 
-    def verify_password(self, password: str, hashed_password: str):
+    def verify_password(self, password: str, hashed_password: str) -> str:
         return self.pwd_context.verify(password, hashed_password)
+    
+    def get_new_password(self, password_length: int = settings.password_length) -> str:
+        return get_password(password_length)
 
 
 class AuthToken:
@@ -134,7 +138,6 @@ class AuthUser(AuthToken):
 
             raise credentials_exception
 
-        # looking to black list. If find -> raise Could not validate credentials
         bl_token = self.redis_client.get(token)
         if bl_token:
             raise credentials_exception
@@ -162,10 +165,8 @@ class AuthUser(AuthToken):
             user: User = pickle.loads(user)
 
         if not user.get('status_active'):
-
-            # await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
+            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
-
 
         return user
 
