@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Image, Role, User
 
-from src.shemas.users import UserBase, UserModel, UserType
+from src.schemas.users import UserBase, UserModel, UserType
 from src.conf import messages
 
 

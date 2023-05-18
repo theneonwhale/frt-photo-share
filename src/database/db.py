@@ -1,5 +1,5 @@
-# import configparser
-# import pathlib
+# from datetime import datetime
+# import traceback
 
 from fastapi import HTTPException, status
 import redis
@@ -10,6 +10,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.conf.config import settings
+from src.conf.messages import MSC500_DATABASE_CONFIG, MSC500_DATABASE_CONNECT
+from src.services.asyncdevlogging import async_logging_to_file
 
 
 URI = settings.sqlalchemy_database_url
@@ -58,9 +60,11 @@ def get_redis(is_async: bool = True):
     except AuthenticationError as error:
         redis_client = None
         print(f'Authentication failed to connect to redis\n{error}')
+        # await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONFIG}: {err}\t{traceback.extract_stack(None, 2)[1][2]}')
 
     except Exception as error:
         redis_client = None
         print(f'Unable to connect to redis\n{error}')
+        # await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}: {err}\t{traceback.extract_stack(None, 2)[1][2]}')
 
     return redis_client if redis_client else None

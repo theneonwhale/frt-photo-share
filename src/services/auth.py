@@ -21,15 +21,15 @@ from src.services.asyncdevlogging import async_logging_to_file
 
 
 class AuthPassword:
-    pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-    def get_hash_password(self, password: str) -> str:
-        return self.pwd_context.hash(password)
+    @staticmethod
+    def get_hash_password(password: str) -> str:
+        pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-    def verify_password(self, password: str, hashed_password: str) -> str:
-        return self.pwd_context.verify(password, hashed_password)
+        return pwd_context.hash(password)
 
-    def get_new_password(self, password_length: int = settings.password_length, meeting_limit: int = 2) -> str:
+    @staticmethod
+    def get_new_password(password_length: int = settings.password_length, meeting_limit: int = 2) -> str:
         letters = string.ascii_letters
         digits = string.digits
         special_chars = string.punctuation
@@ -45,123 +45,101 @@ class AuthPassword:
                     sum(char in digits for char in pwd) >= meeting_limit):
                 break
 
-        return self.pwd_context.hash(pwd)
+        return AuthPassword.pwd_context.hash(pwd)
+
+    @staticmethod
+    def verify_password(password: str, hashed_password: str) -> str:
+        pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+        return pwd_context.verify(password, hashed_password)
 
 
 class AuthToken:
+    oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
     SECRET_KEY = settings.secret_key
     ALGORITHM = settings.algorithm
-    oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
+    credentials_exception = HTTPException(
+                                          status_code=status.HTTP_401_UNAUTHORIZED,
+                                          detail=messages.MSC401_CREDENTIALS,
+                                          headers={'WWW-Authenticate': messages.TOKEN_TYPE},
+                                          )
 
-    async def create_access_token(self, data: dict, expires_delta: Optional[float] = None):
+    @classmethod
+    async def create_token(cls, data: dict, expires_delta: Optional[float] = None, token_type: str = None) -> str:
         to_encode = data.copy()
+        token_type_mapping = {
+                              'access_token': settings.access_token_timer,
+                              'refresh_token': settings.refresh_token_timer,
+                              'password_reset_token': settings.password_reset_token_timer,
+                              'email_token': settings.email_token_timer,
+                              }
+        default_token_lifetime_limit = token_type_mapping.get(token_type, 0)
+
         if expires_delta:
             expire = datetime.utcnow() + timedelta(expires_delta)
 
         else:
-            expire = datetime.utcnow() + timedelta(hours=settings.access_token_timer)
+            expire = datetime.utcnow() + timedelta(hours=default_token_lifetime_limit)
 
-        to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'access_token'})
-        access_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
-
-        return access_token
-
-    async def create_refresh_token(self, data: dict, expires_delta: Optional[float] = None):
-        to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + timedelta(expires_delta)
-
-        else:
-            expire = datetime.utcnow() + timedelta(days=settings.refresh_token_timer)
-
-        to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'refresh_token'})
-        refresh_token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
-
-        return refresh_token
-
-    async def create_email_token(self, data: dict):
-        to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(hours=settings.email_token_timer)
-        to_encode.update({'iat': datetime.utcnow(), 'exp': expire})
-        token = jwt.encode(to_encode, self.SECRET_KEY, self.ALGORITHM)
+        to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': token_type})
+        token = jwt.encode(to_encode, AuthToken.SECRET_KEY, AuthToken.ALGORITHM)
 
         return token
 
-    async def get_email_from_token(self, token: str):
+    @classmethod
+    async def get_email_from_token(cls, token: OAuth2PasswordBearer = Depends(oauth2_scheme), token_type: str = None) -> str:
         try:
-            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+            payload = jwt.decode(token, AuthToken.SECRET_KEY, algorithms=[AuthToken.ALGORITHM])
             email = payload['sub']
-
-            return email
+            if not token_type:
+                return email
+            
+            elif payload['scope'] == token_type:
+                if email is None:
+                    raise AuthToken.credentials_exception  # MSC401_EMAIL ?
+                
+            else:
+                raise AuthToken.credentials_exception  # MSC401_TOKEN_SCOPE ?
 
         except JWTError as e:
-            print(e)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail=messages.MSC422_EMAIL_VERIFICATION)
-
-    async def refresh_token_email(self, refresh_token: OAuth2PasswordBearer = Depends(oauth2_scheme)):
-        try:
-            payload = jwt.decode(refresh_token, self.SECRET_KEY, self.ALGORITHM)
-            if payload['scope'] == 'refresh_token':
-                email = payload['sub']
-                if email is None:
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_EMAIL)
-            else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_TOKEN_SCOPE)
-
-        except:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_CREDENTIALS)
-
+            await async_logging_to_file(f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
+            raise HTTPException(
+                                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=messages.MSC422_INVALID_TOKEN
+                                )
+        
         return email
+    
 
-    async def create_password_reset_token(self, data: dict, expires_delta: Optional[float] = None):
-        to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + timedelta(seconds=expires_delta)
+    @staticmethod
+    async def token_check(payload: dict, token_type: str = 'access_token') -> str:
+        if payload['scope'] == token_type:
+            email = payload['sub']
+            if email is None:
+                raise AuthToken.credentials_exception
 
         else:
-            expire = datetime.utcnow() + timedelta(minutes=settings.password_reset_token_timer)
-
-        to_encode.update({'iat': datetime.utcnow(), 'exp': expire, 'scope': 'password_reset_token'})
-        encoded_password_reset_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
-
-        return encoded_password_reset_token
+            raise AuthToken.credentials_exception
+        
+        return email
 
 
 class AuthUser(AuthToken):
     redis_client = get_redis(False)
 
-    async def clear_user_cash(self, user_email):
-        self.redis_client.delete(user_email)
+    @classmethod
+    async def clear_user_cash(cls, user_email) -> None:
+        AuthUser.redis_client.delete(user_email)
 
-    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme),
-                               db: Session = Depends(get_db)) -> dict:
-        credentials_exception = HTTPException(
+    @classmethod
+    async def get_current_user(cls, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
+        email = AuthToken.get_email_from_token(token, token_type='access_token')
 
-                                              status_code=status.HTTP_401_UNAUTHORIZED,
-                                              detail=messages.MSC401_CREDENTIALS,
-                                              headers={'WWW-Authenticate': messages.TOKEN_TYPE},
-                                              )
-        try:
-            payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
-            if payload['scope'] == 'access_token':
-                email = payload['sub']
-                if email is None:
-                    raise credentials_exception
-            else:
-                raise credentials_exception
-
-        except JWTError as e:
-            await async_logging_to_file(
-                f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
-
-            raise credentials_exception
-
-        bl_token = self.redis_client.get(token)
+        bl_token = AuthUser.redis_client.get(token)
         if bl_token:
-            raise credentials_exception
+            raise AuthUser.credentials_exception
 
-        user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
+        user: Optional[User] = AuthUser.redis_client.get(email) if AuthUser.redis_client else None
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
 
@@ -174,10 +152,10 @@ class AuthUser(AuthToken):
             }
 
             if user is None:
-                raise credentials_exception
+                raise AuthUser.credentials_exception
 
-            self.redis_client.set(email, pickle.dumps(user)) if self.redis_client else None
-            self.redis_client.expire(email, settings.redis_user_timer) if self.redis_client else None
+            AuthUser.redis_client.set(email, pickle.dumps(user)) if AuthUser.redis_client else None
+            AuthUser.redis_client.expire(email, settings.redis_user_timer) if AuthUser.redis_client else None
 
         else:
             user: User = pickle.loads(user)
@@ -189,34 +167,19 @@ class AuthUser(AuthToken):
 
         return user
 
-    async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
-        credentials_exception = HTTPException(
-
-                                              status_code=status.HTTP_401_UNAUTHORIZED,
-                                              detail=messages.MSC401_CREDENTIALS,
-                                              headers={'WWW-Authenticate': messages.TOKEN_TYPE},
-                                              )
-
+    @classmethod
+    async def logout_user(cls, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         try:
-            payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
-            if payload['scope'] == 'access_token':
-                email = payload['sub']
-                if email is None:
-                    raise credentials_exception
-
-            else:
-                raise credentials_exception
+            payload = jwt.decode(token, AuthUser.SECRET_KEY, AuthUser.ALGORITHM)
+            email = AuthUser.token_check(payload, token_type='access_token')
 
         except:
-            raise credentials_exception
+            raise AuthUser.credentials_exception
 
         now = datetime.timestamp(datetime.now())
         time_delta = payload['exp'] - now + settings.redis_addition_lag
-        self.redis_client.set(token, 'True')
-        self.redis_client.expire(token, int(time_delta))
+        AuthUser.redis_client.set(token, 'True')
+        AuthUser.redis_client.expire(token, int(time_delta))
 
 
-authpassword = AuthPassword()
-authtoken = AuthToken()
-authuser = AuthUser()
 security = HTTPBearer()

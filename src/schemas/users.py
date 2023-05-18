@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
+
 from src.conf import messages
 from src.database.models import Role
 

@@ -15,8 +15,8 @@ from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
 from src.repository import tags as repository_tags
 from src.repository import users as repository_users
-from src.shemas.images import ImageModel, ImageResponse, SortDirection
-from src.services.auth import authuser, security
+from src.schemas.images import ImageModel, ImageResponse, SortDirection
+from src.services.auth import AuthUser, security
 from src.services.images import CloudImage
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete
 
@@ -35,7 +35,7 @@ router = APIRouter(prefix='/images', tags=['images'])
             )
 async def get_images(
                        db: Session = Depends(get_db),
-                       current_user: dict = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(AuthUser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security),
                        pagination_params: Params = Depends()
                        ) -> Page:
@@ -58,7 +58,7 @@ async def transform_image(
                           type: TransformationsType,
                           image_id: int = Path(ge=1),
                           db: Session = Depends(get_db),
-                          current_user: dict = Depends(authuser.get_current_user),
+                          current_user: dict = Depends(AuthUser.get_current_user),
                           credentials: HTTPAuthorizationCredentials = Security(security)
                           ) -> Optional[Image]:
     image = await repository_images.get_image(image_id, current_user, db)
@@ -91,7 +91,7 @@ async def transform_image(
 async def image_qrcode(
                        image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
-                       current_user: dict = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(AuthUser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security),
                        ):
     image = await repository_images.get_image(image_id, current_user, db)
@@ -115,7 +115,7 @@ async def image_qrcode(
 async def get_image(
                     image_id: int = Path(ge=1),
                     db: Session = Depends(get_db),
-                    current_user: dict = Depends(authuser.get_current_user),
+                    current_user: dict = Depends(AuthUser.get_current_user),
                     credentials: HTTPAuthorizationCredentials = Security(security)
                     ) -> Optional[Image]:
 
@@ -140,7 +140,7 @@ async def create_image(
                        tags: str = '',
                        file: UploadFile = File(),
                        db: Session = Depends(get_db),
-                       current_user: dict = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(AuthUser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Image:
     public_id = CloudImage.generate_name_image(current_user.get('email'), file.filename)
@@ -167,7 +167,7 @@ async def create_image(
 async def remove_image(
                        image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
-                       current_user: dict = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(AuthUser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Optional[Image]:
 
@@ -189,7 +189,7 @@ async def update_image(
                        body: ImageModel,
                        image_id: int = Path(ge=1),
                        db: Session = Depends(get_db),
-                       current_user: dict = Depends(authuser.get_current_user),
+                       current_user: dict = Depends(AuthUser.get_current_user),
                        credentials: HTTPAuthorizationCredentials = Security(security)
                        ) -> Image:
     image = await repository_images.update_image(image_id, body, current_user, db, settings.tags_limit)
@@ -212,7 +212,7 @@ async def get_image_by_tag_name(
                                 tag_name: str,
                                 sort_direction: SortDirection,
                                 db: Session = Depends(get_db),
-                                current_user: dict = Depends(authuser.get_current_user),
+                                current_user: dict = Depends(AuthUser.get_current_user),
                                 credentials: HTTPAuthorizationCredentials = Security(security)
                                 ) -> List[Image]:
     tag = await repository_tags.get_tag_by_name(tag_name, db)
@@ -239,7 +239,7 @@ async def get_image_by_user(
                             user_id: int,
                             sort_direction: SortDirection,
                             db: Session = Depends(get_db),
-                            current_user: dict = Depends(authuser.get_current_user),
+                            current_user: dict = Depends(AuthUser.get_current_user),
                             credentials: HTTPAuthorizationCredentials = Security(security)
                             ) -> List[Image]:
 

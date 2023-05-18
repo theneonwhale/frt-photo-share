@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     tags_limit: int = 5
     limit_crit_timer: int = 60 # seconds
     access_token_timer: int = 1 # hours
-    refresh_token_timer: int = 7 # days
+    refresh_token_timer: int = 168 # hours
     email_token_timer: int = 1 # hours
-    password_reset_token_timer: int = 25 # minutes
+    password_reset_token_timer: int = 1 # hours
     redis_user_timer: int = 3600 # seconds
     redis_addition_lag: int = 300
     break_point: int = 8
