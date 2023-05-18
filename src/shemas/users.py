@@ -1,9 +1,7 @@
-import enum
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
-from typing import List
 from src.conf import messages
-from src.database.models import Role, TransformationsType
+from src.database.models import Role
 
 
 class UserBase(BaseModel):
@@ -45,7 +43,7 @@ class UserResponse(BaseModel):
     roles: Role
     detail: str = messages.MSC201_USER_CREATED
     status_active: bool
-    
+
     class Config:
         orm_mode = True
 
@@ -53,29 +51,6 @@ class UserResponse(BaseModel):
 class UserResponseFull(UserResponse):
     """User full-response class."""
     number_images: int = 0
-
-
-class TagModel(BaseModel):
-    name: str = Field(max_length=20)
-
-    class Config:
-        orm_mode = True
-
-
-class ImageModel(BaseModel):
-    description: str = Field(max_length=50)
-    tags: str
-
-
-class ImageResponse(ImageModel):
-    id: int
-    link: str
-    created_at: datetime
-    updated_at: datetime
-    tags: List[TagModel]
-
-    class Config:
-        orm_mode = True
 
 
 class Token(BaseModel):
@@ -91,26 +66,6 @@ class RequestEmail(BaseModel):
 class PasswordRecovery(BaseModel):  # #
     """To check the sufficiency of the password during the password recovery procedure."""
     password: str = Field(min_length=6, max_length=14)
-
-
-class CommentModel(BaseModel):
-    comment: str = Field(max_length=2000)
-
-
-class CommentResponse(CommentModel):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-
-class TransformateModel(BaseModel):
-    Type: TransformationsType
-
-
-class SortDirection(enum.Enum):
-    up: str = 'asc'
-    down: str = 'desc'
 
 
 class MessageRequest(BaseModel):

@@ -15,7 +15,7 @@ from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
 from src.repository import tags as repository_tags
 from src.repository import users as repository_users
-from src.schemas import ImageModel, ImageResponse, SortDirection
+from src.shemas.images import ImageModel, ImageResponse, SortDirection
 from src.services.auth import authuser, security
 from src.services.images import CloudImage
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete
