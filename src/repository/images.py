@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Image, image_m2m_tag
 from src.schemas import ImageModel
-from src.conf.messages import *
+from src.conf import messages
 from src.repository import tags as repository_tags
 
 
@@ -42,12 +42,14 @@ async def create_image(
                        tags_limit: int
                        ) -> Image | Exception:
     tags_names = body['tags'].split()
+
     if len(tags_names) > tags_limit:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_TAGS)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=messages.MSC409_TAGS)
     
     tags = []
     for el in tags_names:
         tag = await repository_tags.get_tag_by_name(el, db)
+
         if tag is None:
             tag = await repository_tags.create_tag(el, db)
 

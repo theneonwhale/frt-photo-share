@@ -37,46 +37,46 @@ class CloudImage:
         ]
     }
 
-    @staticmethod
-    def generate_name_avatar(email: str):
+    @classmethod
+    def generate_name_avatar(cls, email: str):
         user_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:14]
 
         return f'FRT-PHOTO-SHARE-AVATARS/{user_name}'
 
-    @staticmethod
-    def get_url_for_avatar(public_id, res, clipping: tuple[int, int] = (120, 120)) -> str:
+    @classmethod
+    def get_url_for_avatar(cls, public_id, res, clipping: tuple[int, int] = (120, 120)) -> str:
         return (
             cloudinary
             .CloudinaryImage(public_id)
             .build_url(width=clipping[0], height=clipping[1], crop='fill', version=res.get('version'))
         )
 
-    @staticmethod
-    def avatar_upload(file: BinaryIO, email: str, clipping: tuple[int, int] = (120, 120)) -> str:
-        avatar_id = CloudImage.generate_name_avatar(email)
+    @classmethod
+    def avatar_upload(cls, file: BinaryIO, email: str, clipping: tuple[int, int] = (120, 120)) -> str:
+        avatar_id = cls.generate_name_avatar(email)
         upload_result = cloudinary.uploader.upload(file, public_id=avatar_id, overwrite=True)
 
-        return CloudImage.get_url_for_avatar(avatar_id, upload_result, clipping)
+        return cls.get_url_for_avatar(avatar_id, upload_result, clipping)
 
-    @staticmethod
-    def generate_name_image(email: str, filename: str):
+    @classmethod
+    def generate_name_image(cls, email: str, filename: str):
         image_name = hashlib.sha256(email.encode('utf-8')).hexdigest()[:12]
         image_sufix = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:12]
 
         return f'FRT-PHOTO-SHARE-IMAGES/{image_name}-{image_sufix}'
 
-    @staticmethod
-    def image_upload(file, public_id: str):
+    @classmethod
+    def image_upload(cls, file, public_id: str):
         return cloudinary.uploader.upload(file, public_id=public_id, overwrite=True)
 
-    @staticmethod
-    def get_url_for_image(public_id, r):
+    @classmethod
+    def get_url_for_image(cls, public_id, r):
         src_url = cloudinary.CloudinaryImage(public_id).build_url(version=r.get('version'))
 
         return src_url
 
-    @staticmethod
-    def transformation(image: Image, type):
+    @classmethod
+    def transformation(cls, image: Image, type):
         old_link = image.link
         break_point = old_link.find('/upload/') + settings.break_point
         image_name = old_link[break_point:]
@@ -84,8 +84,8 @@ class CloudImage:
 
         return new_link
 
-    @staticmethod
-    def get_qrcode(image: Image):
+    @classmethod
+    def get_qrcode(cls, image: Image):
         qr_code = qrcode.QRCode(
             error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=7,
@@ -100,6 +100,3 @@ class CloudImage:
         output.seek(0)
 
         return output
-
-
-cloud_image = CloudImage()

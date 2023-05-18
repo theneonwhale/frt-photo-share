@@ -9,7 +9,7 @@ from src.database.models import Image, Role, User
 
 from src.schemas import UserBase, UserModel, UserType
 from src.services.auth import authpassword
-from src.conf.messages import *
+from src.conf import messages
 
 
 async def get_user_by_email(email: str, db: Session) -> User:
@@ -133,7 +133,7 @@ async def ban_user(user_id, active_status, db):
         return None
     
     if user.roles.value == 'admin':
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     
     user.status_active = active_status
     db.commit()

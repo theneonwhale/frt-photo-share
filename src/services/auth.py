@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
-from src.conf.messages import *
+from src.conf import messages
 from src.database.db import get_db, get_redis
 from src.database.models import User
 from src.repository import users as repository_users
@@ -97,7 +97,7 @@ class AuthToken:
         except JWTError as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail=MSC422_EMAIL_VERIFICATION)
+                                detail=messages.MSC422_EMAIL_VERIFICATION)
 
     async def refresh_token_email(self, refresh_token: OAuth2PasswordBearer = Depends(oauth2_scheme)):
         try:
@@ -105,12 +105,12 @@ class AuthToken:
             if payload['scope'] == 'refresh_token':
                 email = payload['sub']
                 if email is None:
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
+                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_EMAIL)
             else:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN_SCOPE)
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_TOKEN_SCOPE)
 
         except:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_CREDENTIALS)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_CREDENTIALS)
 
         return email
 
@@ -137,10 +137,11 @@ class AuthUser(AuthToken):
     async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme),
                                db: Session = Depends(get_db)) -> dict:
         credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=MSC401_CREDENTIALS,
-            headers={'WWW-Authenticate': TOKEN_TYPE},
-        )
+
+                                              status_code=status.HTTP_401_UNAUTHORIZED,
+                                              detail=messages.MSC401_CREDENTIALS,
+                                              headers={'WWW-Authenticate': messages.TOKEN_TYPE},
+                                              )
         try:
             payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
             if payload['scope'] == 'access_token':
@@ -182,18 +183,20 @@ class AuthUser(AuthToken):
             user: User = pickle.loads(user)
 
         if not user.get('status_active'):
-            await async_logging_to_file(
-                f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+
+            await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
 
         return user
 
     async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=MSC401_CREDENTIALS,
-            headers={'WWW-Authenticate': TOKEN_TYPE},
-        )
+
+                                              status_code=status.HTTP_401_UNAUTHORIZED,
+                                              detail=messages.MSC401_CREDENTIALS,
+                                              headers={'WWW-Authenticate': messages.TOKEN_TYPE},
+                                              )
+
         try:
             payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
             if payload['scope'] == 'access_token':
