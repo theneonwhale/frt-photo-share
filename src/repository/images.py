@@ -7,7 +7,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
 from src.database.models import Image, image_m2m_tag
-from src.shemas.images import ImageModel
+from src.schemas.images import ImageModel
 from src.conf import messages
 from src.repository import tags as repository_tags
 

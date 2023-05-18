@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from src.database.models import Comment, Image, User
-from src.shemas.images import CommentModel
+from src.schemas.images import CommentModel
 
 
 async def add_comment(
