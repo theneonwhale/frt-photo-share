@@ -2,8 +2,7 @@ import enum
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import List
-# from sqlalchemy import asc, desc
-from src.conf.messages import MSC201_USER_CREATED, TOKEN_TYPE
+from src.conf import messages
 from src.database.models import Role, TransformationsType
 
 
@@ -44,7 +43,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     avatar: str
     roles: Role
-    detail: str = MSC201_USER_CREATED
+    detail: str = messages.MSC201_USER_CREATED
     status_active: bool
     
     class Config:
@@ -81,7 +80,7 @@ class ImageResponse(ImageModel):
 class Token(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = TOKEN_TYPE
+    token_type: str = messages.TOKEN_TYPE
 
 
 class RequestEmail(BaseModel):

@@ -8,20 +8,19 @@ from src.conf.config import settings
 from src.conf.messages import EMAIL_CONFIRMATION_REQUEST, PASSWORD_RESET_REQUEST
 from src.services.auth import authtoken as auth
 
-
 conf = ConnectionConfig(
-                        MAIL_USERNAME=settings.mail_username,
-                        MAIL_PASSWORD=settings.mail_password,
-                        MAIL_FROM=EmailStr(settings.mail_from),
-                        MAIL_PORT=settings.mail_port,
-                        MAIL_SERVER=settings.mail_server,
-                        MAIL_FROM_NAME=settings.mail_from_name,
-                        MAIL_STARTTLS=False,
-                        MAIL_SSL_TLS=True,
-                        USE_CREDENTIALS=True,
-                        VALIDATE_CERTS=True,
-                        TEMPLATE_FOLDER=Path(__file__).parent / 'templates',
-                        )
+    MAIL_USERNAME=settings.mail_username,
+    MAIL_PASSWORD=settings.mail_password,
+    MAIL_FROM=EmailStr(settings.mail_from),
+    MAIL_PORT=settings.mail_port,
+    MAIL_SERVER=settings.mail_server,
+    MAIL_FROM_NAME=settings.mail_from_name,
+    MAIL_STARTTLS=False,
+    MAIL_SSL_TLS=True,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True,
+    TEMPLATE_FOLDER=Path(__file__).parent / 'templates',
+)
 
 
 async def send_email(email: EmailStr, username: str, host: str):
@@ -32,11 +31,11 @@ async def send_email(email: EmailStr, username: str, host: str):
             subject=mail_subject,
             recipients=[email],
             template_body={
-                           'subject': mail_subject, 
-                           'host': host, 
-                           'username': username, 
-                           'token': token_verification
-                           },
+                'subject': mail_subject,
+                'host': host,
+                'username': username,
+                'token': token_verification
+            },
             subtype=MessageType.html
         )
 
@@ -54,17 +53,17 @@ async def send_new_password(email: EmailStr, username: str, host: str, password:
             subject=PASSWORD_RESET_REQUEST,
             recipients=[email],
             template_body={
-                           'subject': subject,
-                           'host': host, 
-                           'username': username, 
-                           'new_password': password,
-                           },
+                'subject': subject,
+                'host': host,
+                'username': username,
+                'new_password': password,
+            },
             subtype=MessageType.html
-            )
+        )
 
         fm = FastMail(conf)
         await fm.send_message(message, template_name='new_password.html')
-        
+
     except ConnectionErrors as err:
         print(err)
 
@@ -77,16 +76,16 @@ async def send_reset_password(email: EmailStr, username: str, host: str):
             subject=PASSWORD_RESET_REQUEST,
             recipients=[email],
             template_body={
-                           'subject': subject,
-                           'host': host, 
-                           'username': username, 
-                           'token': token_verification,
-                           },
+                'subject': subject,
+                'host': host,
+                'username': username,
+                'token': token_verification,
+            },
             subtype=MessageType.html
-            )
+        )
 
         fm = FastMail(conf)
         await fm.send_message(message, template_name='password_reset.html')
-        
+
     except ConnectionErrors as err:
         print(err)
