@@ -12,7 +12,7 @@ from src.database.models import Comment
 from src.repository import images as repository_images
 from src.repository import comments as repository_comments
 from src.schemas import CommentModel, CommentResponse
-from src.services.auth import authuser, security
+from src.services.auth import AuthUser, security
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
 
@@ -31,7 +31,7 @@ router = APIRouter(prefix='/comment', tags=['comments'])
 async def get_comments_by_image_id(
         image_id: int = Path(ge=1),
         db: Session = Depends(get_db),
-        current_user: dict = Depends(authuser.get_current_user),
+        current_user: dict = Depends(AuthUser.get_current_user),
         credentials: HTTPAuthorizationCredentials = Security(security)
         ) -> List[Comment]:
     image = await repository_images.get_image(image_id, current_user, db)
@@ -53,7 +53,7 @@ async def add_comment(
         body: CommentModel,
         image_id: int = Path(ge=1),
         db: Session = Depends(get_db),
-        current_user: dict = Depends(authuser.get_current_user),
+        current_user: dict = Depends(AuthUser.get_current_user),
         credentials: HTTPAuthorizationCredentials = Security(security)
 ) -> Optional[Comment]:
     image = await repository_images.get_image(image_id, current_user, db)
@@ -76,7 +76,7 @@ async def update_comment(
                          body: CommentModel,
                          comment_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
-                         current_user: dict = Depends(authuser.get_current_user),
+                         current_user: dict = Depends(AuthUser.get_current_user),
                          credentials: HTTPAuthorizationCredentials = Security(security)
                          ) -> Comment:
     comment = await repository_comments.update_comment(comment_id, body, current_user, db)
@@ -98,7 +98,7 @@ async def update_comment(
 async def remove_comment(
                          comment_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
-                         current_user: dict = Depends(authuser.get_current_user),
+                         current_user: dict = Depends(AuthUser.get_current_user),
                          credentials: HTTPAuthorizationCredentials = Security(security)
                          ) -> Optional[Comment]:
     comment = await repository_comments.remove_comment(comment_id, current_user, db)

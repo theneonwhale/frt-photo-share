@@ -7,7 +7,7 @@ from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
 from src.schemas import UserDb, UserResponseFull, UserType, UserBase
-from src.services.auth import authuser, security
+from src.services.auth import AuthUser, security
 
 from src.services.images import CloudImage 
 from src.services.roles import allowed_operation_delete
@@ -18,7 +18,7 @@ router = APIRouter(prefix='/users', tags=['users'])
 
 @router.get('/me', response_model=UserDb, name='Get user info')
 async def read_users_me(
-                        current_user: dict = Depends(authuser.get_current_user),
+                        current_user: dict = Depends(AuthUser.get_current_user),
                         credentials: HTTPAuthorizationCredentials = Security(security),
                         db: Session = Depends(get_db)
                         ) -> User:
@@ -28,7 +28,7 @@ async def read_users_me(
 @router.get('/{user_id}', response_model=UserResponseFull, name='Get user info by id')
 async def read_user_by_id(
                           user_id: int,
-                          current_user: dict = Depends(authuser.get_current_user),
+                          current_user: dict = Depends(AuthUser.get_current_user),
                           credentials: HTTPAuthorizationCredentials = Security(security),
                           db: Session = Depends(get_db)
                           ) -> dict:
@@ -54,7 +54,7 @@ async def read_user_by_id(
 async def update_user_profile(
                               user_id: int,
                               body: UserType,
-                              current_user: dict = Depends(authuser.get_current_user),
+                              current_user: dict = Depends(AuthUser.get_current_user),
                               credentials: HTTPAuthorizationCredentials = Security(security), 
                               db: Session = Depends(get_db)
                               ) -> User:
@@ -69,7 +69,7 @@ async def update_user_profile(
 async def update_your_profile(
                               user_id: int,
                               body: UserBase,
-                              current_user: dict = Depends(authuser.get_current_user), 
+                              current_user: dict = Depends(AuthUser.get_current_user), 
                               credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
                               ) -> User:
@@ -83,7 +83,7 @@ async def update_your_profile(
 @router.patch('/avatar', response_model=UserDb)
 async def update_avatar_user(
                              file: UploadFile = File(), 
-                             current_user: dict = Depends(authuser.get_current_user),
+                             current_user: dict = Depends(AuthUser.get_current_user),
                              credentials: HTTPAuthorizationCredentials = Security(security),
                              db: Session = Depends(get_db)
                              ) -> User:
@@ -104,13 +104,13 @@ async def update_avatar_user(
 async def bun_user(
                    user_id: int,
                    active_status: bool,
-                   current_user: dict = Depends(authuser.get_current_user),
+                   current_user: dict = Depends(AuthUser.get_current_user),
                    db: Session = Depends(get_db)
                    ):
     user = await repository_users.ban_user(user_id, active_status, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
     
-    await authuser.clear_user_cash(user.email)
+    await AuthUser.clear_user_cash(user.email)
 
     return user

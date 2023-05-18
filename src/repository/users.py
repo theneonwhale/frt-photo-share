@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from src.database.models import Image, Role, User
 
 from src.schemas import UserBase, UserModel, UserType
-from src.services.auth import authpassword
 from src.conf.messages import *
 
 

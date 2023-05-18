@@ -25,7 +25,7 @@ from src.schemas import (
                          UserModel,
                          UserResponse,
                         )
-from src.services.auth import authpassword, authtoken, authuser, security
+from src.services.auth import AuthPassword, AuthToken, AuthUser, security
 from src.services.email import send_email, send_new_password, send_reset_password
 
 
@@ -40,7 +40,7 @@ async def sign_up(body: UserModel, background_tasks: BackgroundTasks, request: R
     if check_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=MSC409_CONFLICT)
 
-    body.password = authpassword.get_hash_password(body.password)
+    body.password = AuthPassword.get_hash_password(body.password)
     new_user = await repository_users.create_user(body, db)
     background_tasks.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
 
@@ -53,14 +53,14 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL)
 
-    if not authpassword.verify_password(body.password, user.password):
+    if not AuthPassword.verify_password(body.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_PASSWORD)
 
     if not user.confirmed:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_EMAIL_UNKNOWN)
 
-    access_token = await authtoken.create_access_token(data={'sub': user.email})
-    refresh_token = await authtoken.create_refresh_token(data={'sub': user.email})
+    access_token = await AuthToken.create_token(data={'sub': user.email}, token_type='access_token')
+    refresh_token = await AuthToken.create_token(data={'sub': user.email}, token_type='refresh_token')
     await repository_users.update_token(user, refresh_token, db)
 
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
@@ -69,7 +69,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
 @router.get("/logout", response_class=HTMLResponse)
 async def logout(
            credentials: HTTPAuthorizationCredentials = Security(security),
-           current_user: dict = Depends(authuser.logout_user)
+           current_user: dict = Depends(AuthUser.logout_user)
            ) -> RedirectResponse:
     resp = RedirectResponse(url="/login", status_code=status.HTTP_205_RESET_CONTENT)
 
@@ -82,15 +82,15 @@ async def refresh_token(
                         db: Session = Depends(get_db)
                         ) -> dict:
     token = credentials.credentials
-    email = await authtoken.refresh_token_email(token)
+    email = await AuthToken.get_email_from_token(token, 'refresh_token')
     user = await repository_users.get_user_by_email(email, db)
     if user.refresh_token != token:
         print(f'\n\n{user.refresh_token}\n{token}\n\n')
         await repository_users.update_token(user, None, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MSC401_TOKEN)
 
-    access_token = await authtoken.create_access_token(data={'sub': email})
-    refresh_token = await authtoken.create_refresh_token(data={'sub': email})
+    access_token = await AuthToken.create_token(data={'sub': user.email}, token_type='access_token')
+    refresh_token = await AuthToken.create_token(data={'sub': user.email}, token_type='refresh_token')
     await repository_users.update_token(user, refresh_token, db)
 
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': TOKEN_TYPE}
@@ -112,7 +112,7 @@ async def request_confirm_email(body: RequestEmail, background_tasks: Background
 
 @router.get('/confirmed_email/{token}', response_model=MessageRequest)
 async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
-    email = await authtoken.get_email_from_token(token)
+    email = await AuthToken.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=MSC400_BAD_REQUEST)
@@ -181,14 +181,14 @@ async def reset_password_confirm(
                                  db: Session = Depends(get_db)
                                  ) -> dict:
 
-    email: str = await authtoken.get_email_from_token(token)
+    email: str = await AuthToken.get_email_from_token(token)
     exist_user = await repository_users.get_user_by_email(email, db)
     if not exist_user:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=MSC503_UNKNOWN_USER)
     
-    new_password: str = authpassword.get_new_password()
-    password: str = authpassword.get_hash_password(new_password)
+    new_password: str = AuthPassword.get_new_password()
+    password: str = AuthPassword.get_hash_password(new_password)
     
     updated_user: User = await repository_users.change_password_for_user(exist_user, password, db)
     if updated_user is None:
