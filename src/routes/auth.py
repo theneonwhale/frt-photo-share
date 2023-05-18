@@ -18,13 +18,7 @@ from src.conf import messages
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import (
-                         MessageRequest,
-                         RequestEmail,
-                         Token,
-                         UserModel,
-                         UserResponse,
-                        )
+from src.shemas.users import UserModel, UserResponse, Token, RequestEmail, MessageRequest
 from src.services.auth import authpassword, authtoken, authuser, security
 from src.services.email import send_email, send_new_password, send_reset_password
 

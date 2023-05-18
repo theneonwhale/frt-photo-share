@@ -6,7 +6,7 @@ from src.conf import messages
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas import UserDb, UserResponseFull, UserType, UserBase
+from src.shemas.users import UserBase, UserType, UserDb, UserResponseFull
 from src.services.auth import authuser, security
 
 from src.services.images import CloudImage 
@@ -36,18 +36,8 @@ async def read_user_by_id(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
 
-    about_user = {
-                  'id': user.id,
-                  'username': user.username,
-                  'email': user.email,
-                  'created_at': user.created_at,
-                  'avatar': user.avatar,
-                  'roles': user.roles,
-                  'status_active': user.status_active,
-                  'number_images': await repository_users.get_number_of_images_per_user(user.email, db),
-                  }
-    
-    return about_user
+    user.number_images = await repository_users.get_number_of_images_per_user(user.email, db)
+    return user
 
 
 @router.put('/{user_id}', response_model=UserDb)

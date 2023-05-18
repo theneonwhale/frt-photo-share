@@ -11,7 +11,7 @@ from src.database.db import get_db
 from src.database.models import Comment
 from src.repository import images as repository_images
 from src.repository import comments as repository_comments
-from src.schemas import CommentModel, CommentResponse
+from src.shemas.images import CommentModel, CommentResponse
 from src.services.auth import authuser, security
 from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
 
