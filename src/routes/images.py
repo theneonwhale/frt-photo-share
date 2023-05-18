@@ -9,7 +9,7 @@ from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
-from src.conf.messages import *
+from src.conf import messages
 from src.database.db import get_db
 from src.database.models import Image, TransformationsType
 from src.repository import images as repository_images
@@ -63,9 +63,9 @@ async def transform_image(
                           ) -> Optional[Image]:
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
     if image.user_id != current_user['id']:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=MSC400_BAD_REQUEST)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages.MSC400_BAD_REQUEST)
 
     transform_image_link = CloudImage.transformation(image, type)
 
@@ -96,7 +96,7 @@ async def image_qrcode(
                        ):
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     qr_code = CloudImage.get_qrcode(image)
 
@@ -121,7 +121,7 @@ async def get_image(
 
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return image
 
@@ -173,7 +173,7 @@ async def remove_image(
 
     image = await repository_images.remove_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return image
 
@@ -194,7 +194,7 @@ async def update_image(
                        ) -> Image:
     image = await repository_images.update_image(image_id, body, current_user, db, settings.tags_limit)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return image
 
@@ -217,11 +217,11 @@ async def get_image_by_tag_name(
                                 ) -> List[Image]:
     tag = await repository_tags.get_tag_by_name(tag_name, db)
     if tag is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_TAG_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_TAG_NOT_FOUND)
 
     images = await repository_images.get_image_by_tag(tag, sort_direction, db)
     if images is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return images
 
@@ -230,7 +230,7 @@ async def get_image_by_tag_name(
             '/search_byuser/{user_id}',
             description=f'Get images by user_id.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
-                          Depends(allowed_all_roles_access),
+                          Depends(allowed_operation_delete),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
             response_model=List[ImageResponse]
@@ -242,13 +242,14 @@ async def get_image_by_user(
                             current_user: dict = Depends(authuser.get_current_user),
                             credentials: HTTPAuthorizationCredentials = Security(security)
                             ) -> List[Image]:
+
     user = await repository_users.get_user_by_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
+
     images = await repository_images.get_image_by_user(user_id, sort_direction, db)
     if images is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return images
 

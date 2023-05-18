@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from src.conf.config import settings
-from src.conf.messages import *
+from src.conf import messages
 from src.database.db import get_db
 from src.database.models import Comment
 from src.repository import images as repository_images
@@ -36,7 +36,7 @@ async def get_comments_by_image_id(
         ) -> List[Comment]:
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
 
     return await repository_comments.get_comments(image_id, db)
 
@@ -58,7 +58,7 @@ async def add_comment(
 ) -> Optional[Comment]:
     image = await repository_images.get_image(image_id, current_user, db)
     if image is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_IMAGE_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_IMAGE_NOT_FOUND)
     comment = await repository_comments.add_comment(body, image_id, current_user, db)
     return comment
 
@@ -81,7 +81,7 @@ async def update_comment(
                          ) -> Comment:
     comment = await repository_comments.update_comment(comment_id, body, current_user, db)
     if comment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_COMMENT_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_COMMENT_NOT_FOUND)
 
     return comment
 
@@ -103,6 +103,6 @@ async def remove_comment(
                          ) -> Optional[Comment]:
     comment = await repository_comments.remove_comment(comment_id, current_user, db)
     if comment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_COMMENT_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_COMMENT_NOT_FOUND)
 
     return comment

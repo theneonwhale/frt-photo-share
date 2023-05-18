@@ -6,7 +6,7 @@ import redis
 import redis.asyncio as aredis
 from redis.exceptions import AuthenticationError
 from sqlalchemy import create_engine
-from sqlalchemy.orm import  declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.conf.config import settings
