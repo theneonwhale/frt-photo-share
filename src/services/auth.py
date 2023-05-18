@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 import traceback
 import pickle
 from typing import Optional
+import secrets
+import string
 
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
@@ -16,7 +18,6 @@ from src.database.db import get_db, get_redis
 from src.database.models import User
 from src.repository import users as repository_users
 from src.services.asyncdevlogging import async_logging_to_file
-from src.services.generator_password import get_password
 
 
 class AuthPassword:
@@ -27,9 +28,24 @@ class AuthPassword:
 
     def verify_password(self, password: str, hashed_password: str) -> str:
         return self.pwd_context.verify(password, hashed_password)
-    
-    def get_new_password(self, password_length: int = settings.password_length) -> str:
-        return get_password(password_length)
+
+    def get_new_password(self, password_length: int = settings.password_length, meeting_limit: int = 2) -> str:
+        letters = string.ascii_letters
+        digits = string.digits
+        special_chars = string.punctuation
+
+        alphabet = letters + digits + special_chars
+
+        while True:
+            pwd = ''
+            for i in range(password_length):
+                pwd += ''.join(secrets.choice(alphabet))
+
+            if (any(char in special_chars for char in pwd) and
+                    sum(char in digits for char in pwd) >= meeting_limit):
+                break
+
+        return self.pwd_context.hash(pwd)
 
 
 class AuthToken:
@@ -118,8 +134,10 @@ class AuthUser(AuthToken):
     async def clear_user_cash(self, user_email):
         self.redis_client.delete(user_email)
 
-    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
+    async def get_current_user(self, token: str = Depends(AuthToken.oauth2_scheme),
+                               db: Session = Depends(get_db)) -> dict:
         credentials_exception = HTTPException(
+
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=messages.MSC401_CREDENTIALS,
                                               headers={'WWW-Authenticate': messages.TOKEN_TYPE},
@@ -134,7 +152,8 @@ class AuthUser(AuthToken):
                 raise credentials_exception
 
         except JWTError as e:
-            await async_logging_to_file(f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
+            await async_logging_to_file(
+                f'\n3XX:\t{datetime.now()}\tJWTError: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
 
             raise credentials_exception
 
@@ -142,18 +161,17 @@ class AuthUser(AuthToken):
         if bl_token:
             raise credentials_exception
 
-
         user: Optional[User] = self.redis_client.get(email) if self.redis_client else None
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
 
             user = {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'roles': user.roles,
-                    'status_active': user.status_active,
-                    }
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'roles': user.roles,
+                'status_active': user.status_active,
+            }
 
             if user is None:
                 raise credentials_exception
@@ -165,18 +183,20 @@ class AuthUser(AuthToken):
             user: User = pickle.loads(user)
 
         if not user.get('status_active'):
+
             await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
 
         return user
 
-
     async def logout_user(self, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         credentials_exception = HTTPException(
+
                                               status_code=status.HTTP_401_UNAUTHORIZED,
                                               detail=messages.MSC401_CREDENTIALS,
                                               headers={'WWW-Authenticate': messages.TOKEN_TYPE},
                                               )
+
         try:
             payload = jwt.decode(token, self.SECRET_KEY, self.ALGORITHM)
             if payload['scope'] == 'access_token':
