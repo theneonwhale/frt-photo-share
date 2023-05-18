@@ -5,3 +5,4 @@ migrations
 /postgres-data/
 cr.txt
 logs/
+postgres-data/
