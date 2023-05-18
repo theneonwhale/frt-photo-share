@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 import uvicorn
 
-from src.conf.messages import *
+from src.conf import messages
 from src.database.db import get_db, get_redis
 from src.routes import auth, comments, images, users
 from src.services.asyncdevlogging import async_logging_to_file
@@ -31,19 +31,19 @@ async def healthchecker(db: Session = Depends(get_db)):
         # Make request
         result = db.execute(text('SELECT 1')).fetchone()
         if result is None:
-            await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
-            raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONFIG)
+            await async_logging_to_file(f'\n500:\t{datetime.now()}\t{messages.MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
+            raise HTTPException(status_code=500, detail=messages.MSC500_DATABASE_CONFIG)
 
-        return {'message': WELCOME_FASTAPI}
+        return {'message': messages.WELCOME_FASTAPI}
 
     except Exception as e:
-        await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
-        raise HTTPException(status_code=500, detail=MSC500_DATABASE_CONNECT)
+        await async_logging_to_file(f'\n500:\t{datetime.now()}\t{messages.MSC500_DATABASE_CONNECT}: {e}\t{traceback.extract_stack(None, 2)[1][2]}')
+        raise HTTPException(status_code=500, detail=messages.MSC500_DATABASE_CONNECT)
 
 
 @app.get('/')
 def read_root():
-    return {'message': WELCOME}
+    return {'message': messages.WELCOME}
 
 
 if __name__ == '__main__':

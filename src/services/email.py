@@ -5,7 +5,7 @@ from fastapi_mail.errors import ConnectionErrors
 from pydantic import EmailStr
 
 from src.conf.config import settings
-from src.conf.messages import EMAIL_CONFIRMATION_REQUEST, PASSWORD_RESET_REQUEST
+from src.conf import messages
 from src.services.auth import authtoken as auth
 
 
@@ -27,7 +27,7 @@ conf = ConnectionConfig(
 async def send_email(email: EmailStr, username: str, host: str):
     try:
         token_verification = await auth.create_email_token({'sub': email})
-        mail_subject = EMAIL_CONFIRMATION_REQUEST
+        mail_subject = messages.EMAIL_CONFIRMATION_REQUEST
         message = MessageSchema(
             subject=mail_subject,
             recipients=[email],
@@ -51,7 +51,7 @@ async def send_new_password(email: EmailStr, username: str, host: str, password:
     subject = 'New password'
     try:
         message = MessageSchema(
-            subject=PASSWORD_RESET_REQUEST,
+            subject=messages.PASSWORD_RESET_REQUEST,
             recipients=[email],
             template_body={
                            'subject': subject,
@@ -74,7 +74,7 @@ async def send_reset_password(email: EmailStr, username: str, host: str):
     try:
         token_verification = await auth.create_password_reset_token({'sub': email})
         message = MessageSchema(
-            subject=PASSWORD_RESET_REQUEST,
+            subject=messages.PASSWORD_RESET_REQUEST,
             recipients=[email],
             template_body={
                            'subject': subject,

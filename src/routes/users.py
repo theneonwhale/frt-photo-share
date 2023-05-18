@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status, UploadF
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from src.conf.messages import *
+from src.conf import messages
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
@@ -34,7 +34,7 @@ async def read_user_by_id(
                           ) -> dict:
     user = await repository_users.get_user_by_id(user_id, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
 
     about_user = {
                   'id': user.id,
@@ -60,7 +60,7 @@ async def update_user_profile(
                               ) -> User:
     user = await repository_users.update_user_profile(user_id, current_user, body, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
     
     return user
 
@@ -75,7 +75,7 @@ async def update_your_profile(
                               ) -> User:
     user = await repository_users.update_your_profile(current_user.get('email'), body, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
     
     return user
 
@@ -91,7 +91,7 @@ async def update_avatar_user(
 
     user = await repository_users.update_avatar(current_user.get('email'), src_url, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSC404_USER_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
 
     return user
 
@@ -109,7 +109,7 @@ async def bun_user(
                    ):
     user = await repository_users.ban_user(user_id, active_status, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=MSC403_USER_BANNED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     
     await authuser.clear_user_cash(user.email)
 

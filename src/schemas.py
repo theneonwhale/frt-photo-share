@@ -70,6 +70,7 @@ class ImageModel(BaseModel):
 
 class ImageResponse(ImageModel):
     id: int
+    link: str
     created_at: datetime
     updated_at: datetime
     tags: List[TagModel]
