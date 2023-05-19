@@ -21,12 +21,12 @@ app.include_router(users.router, prefix='/api')
 
 
 @app.on_event('startup')
-async def startup():
+async def startup() -> None:
     await FastAPILimiter.init(get_redis())
 
 
 @app.get('/api/healthchecker')
-async def healthchecker(db: Session = Depends(get_db)):
+async def healthchecker(db: Session = Depends(get_db)) -> dict:
     try:
         # Make request
         result = db.execute(text('SELECT 1')).fetchone()
@@ -42,7 +42,7 @@ async def healthchecker(db: Session = Depends(get_db)):
 
 
 @app.get('/')
-def read_root():
+def read_root() -> dict:
     return {'message': messages.WELCOME}
 
 
