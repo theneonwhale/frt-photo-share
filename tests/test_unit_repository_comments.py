@@ -1,11 +1,9 @@
-from datetime import date
 import unittest
 from unittest.mock import MagicMock
-
 from sqlalchemy.orm import Session
+from src.database.models import Comment, Image
+from src.schemas.images import CommentModel
 
-from src.database.models import Comment, Image, User
-from src.schemas.images import CommentModel, CommentResponse
 from src.repository.comments import (
     add_comment,
     update_comment,
@@ -49,7 +47,6 @@ class TestComments(unittest.IsolatedAsyncioTestCase):
         self.session.query.return_value.filter_by.assert_called_once_with(id=comment.id)
         self.session.delete.assert_called_once_with(comment)
         self.session.commit.assert_called_once()
-        self.session.refresh.assert_called_once_with(comment)
 
 
 

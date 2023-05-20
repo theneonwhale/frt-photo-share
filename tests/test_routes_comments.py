@@ -38,6 +38,7 @@ def test_add_comment(client, session, token, user, comment, monkeypatch):
         assert data['comment'] == comment['comment']
 
 
+
 def test_get_comments_by_image_id(client, session, token, user, comment, monkeypatch):
     with patch.object(AuthUser, 'redis_client') as redis_mock:
         redis_mock.get.return_value = None
@@ -133,4 +134,3 @@ def test_remove_comment_not_found(client, session, token, user, comment, monkeyp
             headers={'Authorization': f'Bearer {token["access_token"]}'}
         )
         assert response.status_code == 404, response.text
-
