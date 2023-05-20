@@ -22,6 +22,16 @@ async def read_users_me(
                         credentials: HTTPAuthorizationCredentials = Security(security),
                         db: Session = Depends(get_db)
                         ) -> User:
+    """
+    The read_users_me function is a GET request that returns the current user's information.
+    The function requires an authorization header with a valid JWT token to be passed in order for it to work.
+
+    :param current_user: dict: Get the current user from the database
+    :param credentials: HTTPAuthorizationCredentials: Validate the security scheme
+    :param db: Session: Pass the database session to the repository layer
+    :return: The user object of the currently logged in user
+    :doc-author: Trelent
+    """
     return await repository_users.get_user_by_id(current_user.get('id'), db)
 
 
@@ -32,6 +42,16 @@ async def read_user_by_id(
                           credentials: HTTPAuthorizationCredentials = Security(security),
                           db: Session = Depends(get_db)
                           ) -> dict:
+    """
+    The read_user_by_id function reads a user by its id.
+
+    :param user_id: int: Get the user id from the url
+    :param current_user: dict: Get the current user
+    :param credentials: HTTPAuthorizationCredentials: Validate the token in the header of the request
+    :param db: Session: Pass the database session to the repository layer
+    :return: A dictionary with the user information
+    :doc-author: Trelent
+    """
     user = await repository_users.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
@@ -48,6 +68,21 @@ async def update_user_profile(
                               credentials: HTTPAuthorizationCredentials = Security(security), 
                               db: Session = Depends(get_db)
                               ) -> User:
+
+    """
+    The update_user_profile function updates the user profile.
+        Args:
+            user_id (int): The id of the user to update.
+            body (UserType): The updated information for the specified user.
+
+    :param user_id: int: Identify the user to be deleted
+    :param body: UserType: Validate the data sent by the user
+    :param current_user: dict: Get the current user
+    :param credentials: HTTPAuthorizationCredentials: Validate the token
+    :param db: Session: Access the database
+    :return: A user object
+    :doc-author: Trelent
+    """
     user = await repository_users.update_user_profile(user_id, current_user, body, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
@@ -63,6 +98,20 @@ async def update_your_profile(
                               credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
                               ) -> User:
+    """
+    The update_your_profile function updates the current user's profile.
+        Args:
+            user_id (int): The id of the user to update.
+            body (UserBase): The updated information for the User object.
+
+    :param user_id: int: Identify the user
+    :param body: UserBase: Get the data from the request body
+    :param current_user: dict: Get the current user's email
+    :param credentials: HTTPAuthorizationCredentials: Check the token
+    :param db: Session: Access the database
+    :return: The user object
+    :doc-author: Trelent
+    """
     user = await repository_users.update_your_profile(current_user.get('email'), body, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
@@ -77,6 +126,19 @@ async def update_avatar_user(
                              credentials: HTTPAuthorizationCredentials = Security(security),
                              db: Session = Depends(get_db)
                              ) -> User:
+    """
+    The update_avatar_user function updates the avatar of a user.
+        The function takes in an UploadFile object (picture), which is a file that has been uploaded to the server.
+        It also takes in current_user and credentials as dependencies, which are used for authentication purposes.
+        Finally it takes in db as a dependency, which is used to access the database.
+
+    :param file: UploadFile: Upload the file to the cloud
+    :param current_user: dict: Get the current user's email
+    :param credentials: HTTPAuthorizationCredentials: Validate the token
+    :param db: Session: Access the database
+    :return: The user data
+    :doc-author: Trelent
+    """
     src_url = CloudImage.avatar_upload(file.file, current_user.get('email'))
 
     user = await repository_users.update_avatar(current_user.get('email'), src_url, db)
@@ -97,6 +159,16 @@ async def ban_user(
                    current_user: dict = Depends(AuthUser.get_current_user),
                    db: Session = Depends(get_db)
                    ) -> User:
+    """
+    The ban_user function is used to ban a user from the system.
+
+    :param user_id: int: Identify the user to be banned
+    :param active_status: bool: Set the user's status to active or inactive
+    :param current_user: dict: Get the current user from the authuser class
+    :param db: Session: Access the database
+    :return: The banned user object
+    :doc-author: Trelent
+    """
     user: User = await repository_users.ban_user(user_id, active_status, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
