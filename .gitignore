@@ -6,3 +6,5 @@ migrations
 cr.txt
 logs/
 postgres-data/
+.coverage
+test.db
