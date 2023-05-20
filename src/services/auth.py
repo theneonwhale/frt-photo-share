@@ -133,7 +133,7 @@ class AuthUser(AuthToken):
 
     @classmethod
     async def get_current_user(cls, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
-        email = AuthToken.get_email_from_token(token, token_type='access_token')
+        email = await AuthToken.get_email_from_token(token, token_type='access_token')
 
         bl_token = AuthUser.redis_client.get(token)
         if bl_token:
