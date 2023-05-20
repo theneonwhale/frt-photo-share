@@ -140,27 +140,6 @@ async def reset_password(
     return {'message': messages.MSC401_EMAIL_UNKNOWN}
 
 
-@router.post('/reset-password-request')
-async def reset_password(
-                         body: RequestEmail,
-                         background_tasks: BackgroundTasks,
-                         request: Request,
-                         db: Session = Depends(get_db)
-                         ) -> dict:
-
-    user = await repository_users.get_user_by_email(body.email, db)
-
-    if user:
-        if user.confirmed:
-            background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
-
-            return {'message': messages.EMAIL_INFO_CONFIRMED}
-        
-        return {'message': messages.EMAIL_INFO_CONFIRMED}
-    
-    return {'message': messages.MSC401_EMAIL_UNKNOWN}
-
-
 @router.get('/reset-password/done_request', response_class=HTMLResponse, description='Request password reset Page.')  
 async def reset_password_done(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse('password_reset_done.html', {'request': request,

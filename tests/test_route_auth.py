@@ -2,7 +2,6 @@
 import asyncio
 
 from fastapi import status
-# import pytest
 from src.schemas.users import UserResponse
 from src.services.auth import AuthToken
 from unittest.mock import MagicMock, AsyncMock
@@ -10,7 +9,7 @@ from unittest.mock import MagicMock, AsyncMock
 from src.conf import messages as m
 from src.database.models import User
 
-# client - from conftest.py, user - fixture from conftest.py, = common to all; monkeypatch -method to mock services
+
 def test_signup_ok(client, user, monkeypatch):
     mock_send_email = MagicMock()
     # create mock for function where it`s call
@@ -215,9 +214,9 @@ def test_reset_password_check(client, session, user):  # split into several?
     assert response2.status_code == status.HTTP_200_OK
     assert response2.json()['message'] == m.MSC401_EMAIL_UNKNOWN
 
-'''
+
 def test_reset_password_done(client):
-    response = client.get('api/auth/reset-password/done')
+    response = client.get('api/auth/reset-password/done_request')
 
     assert response.status_code == status.HTTP_200_OK
     assert response.template.name == 'password_reset_done.html'
@@ -229,6 +228,9 @@ def test_reset_password_done(client):
 def test_reset_password_confirm_ok(client, session, user, monkeypatch):
     mock_send_email = MagicMock()
     monkeypatch.setattr('src.routes.auth.send_email', mock_send_email) 
+    mock_send_new_password = MagicMock()
+    monkeypatch.setattr('src.routes.auth.send_new_password', mock_send_new_password) 
+
 
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()
     current_user.confirmed = True
@@ -236,9 +238,17 @@ def test_reset_password_confirm_ok(client, session, user, monkeypatch):
 
     user.update(password='new_secret')
 
-    token = auth_service.create_email_token(data={'sub': user['email']})
+    password_reset_token = asyncio.run(
+                                        AuthToken.create_token(data={
+                                                                    'sub': user['email'],
+                                                                    # 'email': user['email'],
+                                                                    'username': user['username'],
+                                                                    }, 
+                                                                expires_delta=30, 
+                                                                token_type='password_reset_token')
+                                        )
 
-    response = client.post(f'api/auth/reset-password/confirm/{token}', json={'password': user['password']})
+    response = client.post(f'api/auth/reset-password/confirm/{password_reset_token}', json={'password': user['password']})  # , json={'password': user['password']}
  
     assert response.status_code == status.HTTP_200_OK
     assert 'user' in response.json()  # response.content  # context
@@ -246,18 +256,24 @@ def test_reset_password_confirm_ok(client, session, user, monkeypatch):
 
 
 def test_reset_password_confirm_fail(client, session, user, monkeypatch):
-    mock_send_email = MagicMock()
-    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email) 
-
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()
-    current_user.confirmed = True
+    current_user.confirmed = False  # True
     session.commit()
 
-    token = auth_service.create_email_token(data={'sub': 'Non_exist@user.mail'})
-    response = client.post(f'api/auth/reset-password/confirm/{token}', json={'password': 'new_secret'})  # data=   json=
+    password_reset_token = asyncio.run(
+                                        AuthToken.create_token(data={
+                                                                    'sub': 'Non_exist@user.mail',
+                                                                    # 'email': user['email'],
+                                                                    'username': user['username'],
+                                                                    }, 
+                                                                expires_delta=30, 
+                                                                token_type='password_reset_token')
+                                        )
+    
+    response = client.post(f'api/auth/reset-password/confirm/{password_reset_token}')  # , json={'password': 'new_secret'}  data=   json=
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-    assert response.json()['detail'] == m.WARNING_INVALID_TOKEN
+    assert response.json()['detail'] == m.MSC503_UNKNOWN_USER
 
 
 def test_reset_password_complete_ok(client):
@@ -268,4 +284,3 @@ def test_reset_password_complete_ok(client):
     assert 'request' in response.context
     assert 'title' in response.context
     assert response.context['title'] == m.MSG_PASSWORD_RESET
-'''

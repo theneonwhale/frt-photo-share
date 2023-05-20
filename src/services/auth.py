@@ -29,7 +29,7 @@ class AuthPassword:
         return pwd_context.hash(password)
 
     @staticmethod
-    def get_new_password(password_length: int = settings.password_length, meeting_limit: int = 2) -> str:
+    def get_new_password(password_length: int = settings.password_length, meeting_limit: int = 3) -> str:
         letters = string.ascii_letters
         digits = string.digits
         special_chars = string.punctuation
@@ -45,7 +45,7 @@ class AuthPassword:
                     sum(char in digits for char in pwd) >= meeting_limit):
                 break
 
-        return AuthPassword.pwd_context.hash(pwd)
+        return AuthPassword.get_hash_password(pwd)
 
     @staticmethod
     def verify_password(password: str, hashed_password: str) -> str:
@@ -133,7 +133,7 @@ class AuthUser(AuthToken):
 
     @classmethod
     async def get_current_user(cls, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
-        email = AuthToken.get_email_from_token(token, token_type='access_token')
+        email: str = await AuthToken.get_email_from_token(token, token_type='access_token')
 
         bl_token = AuthUser.redis_client.get(token)
         if bl_token:

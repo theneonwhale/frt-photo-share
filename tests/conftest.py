@@ -59,7 +59,7 @@ def user():
     return {
             'id': 2,
             'username': 'Example_Name',
-            'email': 'test_email@ukr.com',
+            'email': 'pwht_12p@meta.ua',
             'password': 'Qwerty@1',
             # 'created_at': f'{date.today()}',
             # 'updated_at': f'{date.today()}',
