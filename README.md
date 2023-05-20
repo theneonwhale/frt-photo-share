@@ -39,3 +39,16 @@ packages: https://github.com/uriyyo/fastapi-pagination https://pypi.org/project/
 # ---
 
 ## pagination != "^0.12.3" !!! need poetry update
+
+# ----
+
+.\make.bat html
+make html
+
+# ----
+
+pytest tests/test_root.py -v
+pytest tests/test_route_auth.py -v
+pytest tests/test_route_users.py -v
+
+# -------------------

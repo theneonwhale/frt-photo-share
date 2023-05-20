@@ -126,7 +126,7 @@ async def update_your_profile(email: str, body_data: UserBase, db: Session) -> O
     return user
 
 
-async def ban_user(user_id, active_status, db):
+async def ban_user(user_id: int, active_status: bool, db: Session) -> Optional[User]:
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return None
