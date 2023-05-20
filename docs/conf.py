@@ -5,7 +5,11 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
+import sys
 
+
+sys.path.append(os.path.abspath('..'))
 project = 'frt-photo-share'
 copyright = '2023, FRT'
 author = 'FRT'

@@ -6,3 +6,4 @@ migrations
 cr.txt
 logs/
 postgres-data/
+test.db

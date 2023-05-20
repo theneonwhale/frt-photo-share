@@ -28,11 +28,16 @@ aiofile = "^3.8.5"
 aiopath = "^0.6.11"
 qrcode = "^7.4.2"
 psycopg2-binary = "^2.9.6"
+pytest-mock = "^3.10.0"
 
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.0.0"
 pytest = "^7.3.1"
 pytest-cov = "^4.0.0"
+
+
+[tool.poetry.group.test.dependencies]
+httpx = "^0.24.1"
 
 [build-system]
 requires = ["poetry-core"]

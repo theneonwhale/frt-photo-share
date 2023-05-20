@@ -91,13 +91,13 @@ async def update_avatar_user(
               dependencies=[Depends(allowed_operation_delete)],
               description='Ban/unBan user'
               )
-async def bun_user(
+async def ban_user(
                    user_id: int,
                    active_status: bool,
                    current_user: dict = Depends(AuthUser.get_current_user),
                    db: Session = Depends(get_db)
-                   ):
-    user = await repository_users.ban_user(user_id, active_status, db)
+                   ) -> User:
+    user: User = await repository_users.ban_user(user_id, active_status, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     

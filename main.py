@@ -34,6 +34,8 @@ async def healthchecker(db: Session = Depends(get_db)) -> dict:
             await async_logging_to_file(f'\n500:\t{datetime.now()}\t{messages.MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=500, detail=messages.MSC500_DATABASE_CONFIG)
 
+        await async_logging_to_file(f'\n000:\t{datetime.now()}\t{messages.WELCOME_FASTAPI}\t{traceback.extract_stack(None, 2)[1][2]}')
+
         return {'message': messages.WELCOME_FASTAPI}
 
     except Exception as e:

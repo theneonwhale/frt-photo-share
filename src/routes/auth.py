@@ -70,7 +70,7 @@ async def logout(
     return resp
 
 
-@router.post('/refresh_token', response_model=Token)
+@router.get('/refresh_token', response_model=Token)
 async def refresh_token(
                         credentials: HTTPAuthorizationCredentials = Security(security),
                         db: Session = Depends(get_db)
@@ -79,7 +79,7 @@ async def refresh_token(
     email = await AuthToken.get_email_from_token(token, 'refresh_token')
     user = await repository_users.get_user_by_email(email, db)
     if user.refresh_token != token:
-        print(f'\n\n{user.refresh_token}\n{token}\n\n')
+        # print(f'\n\n{user.refresh_token}\n{token}\n\n')
         await repository_users.update_token(user, None, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_TOKEN)
 
@@ -133,7 +133,7 @@ async def reset_password(
         if user.confirmed:
             background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
 
-            return {'message': messages.EMAIL_INFO_CONFIRMED}
+            return {'message': messages.MSG_SENT_PASSWORD}
         
         return {'message': messages.EMAIL_INFO_CONFIRMED}
     

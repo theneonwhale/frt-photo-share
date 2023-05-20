@@ -13,11 +13,12 @@ async_log_file = str(Path(sys.argv[0]).parent.absolute().joinpath('logs', async_
 
 async def async_logging_to_file(message: str) -> None:
     """Asunc write log to file."""
-    apath = AsyncPath(async_log_file).mkdir(parents=True, exist_ok=True)
-    if await apath.exists() and await apath.is_file():
+    apath = AsyncPath(Path(async_log_file).parent)  # .mkdir(parents=True, exist_ok=True)
+    await apath.mkdir(parents=True, exist_ok=True)
+    if apath.exists() and apath.is_file():
         mode_file_open: str = 'a+'
 
-    elif not await apath.exists():
+    elif not apath.exists():
         mode_file_open: str = 'w+'
 
     else:

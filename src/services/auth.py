@@ -144,12 +144,12 @@ class AuthUser(AuthToken):
             user: User = await repository_users.get_user_by_email(email, db)
 
             user = {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'roles': user.roles,
-                'status_active': user.status_active,
-            }
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'roles': user.roles,
+                    'status_active': user.status_active,
+                   }
 
             if user is None:
                 raise AuthUser.credentials_exception

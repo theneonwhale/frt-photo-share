@@ -46,3 +46,7 @@ packages: https://github.com/uriyyo/fastapi-pagination https://pypi.org/project/
 make html
 
 # ----
+
+pytest tests/test_root.py -v
+pytest tests/test_route_users.py -v
+
