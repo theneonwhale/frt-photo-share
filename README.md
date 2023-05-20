@@ -48,5 +48,7 @@ make html
 # ----
 
 pytest tests/test_root.py -v
+pytest tests/test_route_auth.py -v
 pytest tests/test_route_users.py -v
 
+# -------------------
