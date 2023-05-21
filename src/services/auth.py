@@ -93,11 +93,11 @@ class AuthToken:
             email = payload['sub']
             if not token_type:
                 return email
-            
+
             elif payload['scope'] == token_type:
                 if email is None:
                     raise AuthToken.credentials_exception  # MSC401_EMAIL ?
-                
+
             else:
                 raise AuthToken.credentials_exception  # MSC401_TOKEN_SCOPE ?
 
@@ -107,9 +107,7 @@ class AuthToken:
                                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=messages.MSC422_INVALID_TOKEN
                                 )
-        
         return email
-    
 
     @staticmethod
     async def token_check(payload: dict, token_type: str = 'access_token') -> str:
@@ -120,7 +118,7 @@ class AuthToken:
 
         else:
             raise AuthToken.credentials_exception
-        
+
         return email
 
 

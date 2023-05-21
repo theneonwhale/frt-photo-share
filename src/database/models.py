@@ -2,8 +2,8 @@ import enum
 
 from sqlalchemy import Column, Boolean, Enum, func, Integer, String, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy.sql.sqltypes import DateTime
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint, CheckConstraint
+from sqlalchemy.sql.sqltypes import DateTime, Float
 
 from src.database.db import Base
 
@@ -59,6 +59,7 @@ class Image(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     user = relationship('User', backref='images')
     tags = relationship('Tag', secondary=image_m2m_tag, backref='images')
+    rating = Column(Float, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -79,3 +80,17 @@ class Comment(Base):
     image = relationship('Image', backref='comments')
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
+class Rating(Base):
+    __tablename__ = 'ratings'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    user = relationship("User", backref='ratings')
+    image_id = Column(Integer, ForeignKey('images.id', ondelete='CASCADE'), nullable=True)
+    image = relationship("Image", backref='ratings')
+    stars = Column(Integer, CheckConstraint('stars >= 1 AND stars <= 5'))
+    created_at = Column(DateTime, default=func.now())
+
+    __table_args__ = (UniqueConstraint('user_id', 'image_id', name='_user_image_uc'),)

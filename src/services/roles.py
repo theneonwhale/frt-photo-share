@@ -17,5 +17,6 @@ class RoleAccess:
 
 
 allowed_all_roles_access = RoleAccess([Role.admin, Role.moderator, Role.user])
+allowed_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_update = RoleAccess([Role.admin, Role.moderator, Role.user])
 allowed_operation_delete = RoleAccess([Role.admin, Role.moderator])
