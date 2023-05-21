@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
 from sqlalchemy.orm import Session
+
+from src.conf import messages
 from src.database.models import Comment, Image
 from src.schemas.images import CommentModel
 
@@ -42,7 +44,7 @@ class TestComments(unittest.IsolatedAsyncioTestCase):
         comment = Comment()
         self.session.query.return_value.filter_by.return_value.first.return_value = comment
         result = await remove_comment(comment_id=comment.id, user=self.user, db=self.session)
-        self.assertEqual(result, comment)
+        self.assertEqual(result['message'], messages.COMMENT_DELETED)
         self.session.query.assert_called_once_with(Comment)
         self.session.query.return_value.filter_by.assert_called_once_with(id=comment.id)
         self.session.delete.assert_called_once_with(comment)
