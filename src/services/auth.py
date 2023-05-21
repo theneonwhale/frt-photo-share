@@ -168,10 +168,13 @@ class AuthUser(AuthToken):
         return user
 
     @classmethod
-    async def logout_user(cls, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
+    async def logout_user(cls,
+                          token: str = Depends(AuthToken.oauth2_scheme),
+                          db: Session = Depends(get_db)
+                          ) -> None:
         try:
             payload = jwt.decode(token, AuthUser.SECRET_KEY, AuthUser.ALGORITHM)
-            await AuthUser.token_check(payload, token_type='access_token')
+            email = await AuthUser.token_check(payload, token_type='access_token')
 
         except:
             raise AuthUser.credentials_exception
@@ -180,6 +183,9 @@ class AuthUser(AuthToken):
         time_delta = payload['exp'] - now + settings.redis_addition_lag
         AuthUser.redis_client.set(token, 'True')
         AuthUser.redis_client.expire(token, int(time_delta))
+        user = await repository_users.get_user_by_email(email, db)
+        user.refresh_token = None
+        db.commit()
 
 
 security = HTTPBearer()

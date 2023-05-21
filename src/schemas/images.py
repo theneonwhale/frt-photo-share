@@ -22,6 +22,7 @@ class ImageModel(BaseModel):
 class ImageResponse(ImageModel):
     id: int
     link: str
+    user_id: int
     created_at: datetime
     updated_at: datetime
     tags: List[TagModel]
