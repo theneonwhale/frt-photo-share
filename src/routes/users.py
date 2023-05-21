@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Security, status, UploadFile, File
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -9,8 +11,8 @@ from src.repository import users as repository_users
 from src.schemas.users import UserDb, UserResponseFull, UserType, UserBase
 from src.services.auth import AuthUser, security
 
-from src.services.images import CloudImage 
-from src.services.roles import allowed_operation_delete
+from src.services.images import CloudImage
+from src.services.roles import allowed_admin_moderator
 
 
 router = APIRouter(prefix='/users', tags=['users'])
@@ -65,7 +67,7 @@ async def update_user_profile(
                               user_id: int,
                               body: UserType,
                               current_user: dict = Depends(AuthUser.get_current_user),
-                              credentials: HTTPAuthorizationCredentials = Security(security), 
+                              credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
                               ) -> User:
 
@@ -86,7 +88,7 @@ async def update_user_profile(
     user = await repository_users.update_user_profile(user_id, current_user, body, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
-    
+
     return user
 
 
@@ -94,7 +96,7 @@ async def update_user_profile(
 async def update_your_profile(
                               user_id: int,
                               body: UserBase,
-                              current_user: dict = Depends(AuthUser.get_current_user), 
+                              current_user: dict = Depends(AuthUser.get_current_user),
                               credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
                               ) -> User:
@@ -115,13 +117,13 @@ async def update_your_profile(
     user = await repository_users.update_your_profile(current_user.get('email'), body, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
-    
+
     return user
 
 
 @router.patch('/avatar', response_model=UserDb)
 async def update_avatar_user(
-                             file: UploadFile = File(), 
+                             file: UploadFile = File(),
                              current_user: dict = Depends(AuthUser.get_current_user),
                              credentials: HTTPAuthorizationCredentials = Security(security),
                              db: Session = Depends(get_db)
@@ -150,8 +152,8 @@ async def update_avatar_user(
 
 @router.patch(
               '/ban_user', response_model=UserDb,
-              dependencies=[Depends(allowed_operation_delete)],
-              description='Ban/unBan user'
+              dependencies=[Depends(allowed_admin_moderator)],
+              description='Ban/unban user'
               )
 async def ban_user(
                    user_id: int,
@@ -169,10 +171,10 @@ async def ban_user(
     :return: The banned user object
     :doc-author: Trelent
     """
-    user: User = await repository_users.ban_user(user_id, active_status, db)
+    user: Optional[User] = await repository_users.ban_user(user_id, active_status, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
-    
+
     await AuthUser.clear_user_cash(user.email)
 
     return user

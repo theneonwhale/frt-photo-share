@@ -18,7 +18,7 @@ from src.conf import messages
 from src.database.db import get_db
 from src.database.models import User
 from src.repository import users as repository_users
-from src.schemas.users import MessageRequest, RequestEmail, Token, UserModel, UserResponse
+from src.schemas.users import MessageResponse, RequestEmail, Token, UserModel, UserResponse
 from src.services.auth import AuthPassword, AuthToken, AuthUser, security
 from src.services.email import send_email, send_new_password, send_reset_password
 
@@ -122,7 +122,6 @@ async def refresh_token(
     email = await AuthToken.get_email_from_token(token, 'refresh_token')
     user = await repository_users.get_user_by_email(email, db)
     if user.refresh_token != token:
-        # print(f'\n\n{user.refresh_token}\n{token}\n\n')
         await repository_users.update_token(user, None, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.MSC401_TOKEN)
 
@@ -133,7 +132,7 @@ async def refresh_token(
     return {'access_token': access_token, 'refresh_token': refresh_token, 'token_type': messages.TOKEN_TYPE}
 
 
-@router.post('/request_confirm_email', response_model=MessageRequest)
+@router.post('/request_confirm_email', response_model=MessageResponse)
 async def request_confirm_email(
                                 body: RequestEmail,
                                 background_tasks: BackgroundTasks,
@@ -163,7 +162,7 @@ async def request_confirm_email(
     return {'message': messages.EMAIL_INFO_CONFIRMED}
 
 
-@router.get('/confirmed_email/{token}', response_model=MessageRequest)
+@router.get('/confirmed_email/{token}', response_model=MessageResponse)
 async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
     """
     The confirmed_email function is used to confirm the email of a user.
@@ -189,8 +188,8 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)) -> dict:
 
 @router.post('/reset-password')
 async def reset_password(
-                         body: RequestEmail, 
-                         background_tasks: BackgroundTasks, 
+                         body: RequestEmail,
+                         background_tasks: BackgroundTasks,
                          request: Request,
                          db: Session = Depends(get_db)
                          ) -> dict:
@@ -207,19 +206,19 @@ async def reset_password(
     :doc-author: Trelent
     """
     user = await repository_users.get_user_by_email(body.email, db)
-    
+
     if user:
         if user.confirmed:
             background_tasks.add_task(send_reset_password, user.email, user.username, request.base_url)
 
             return {'message': messages.MSG_SENT_PASSWORD}
-        
+
         return {'message': messages.EMAIL_INFO_CONFIRMED}
-    
+
     return {'message': messages.MSC401_EMAIL_UNKNOWN}
 
 
-@router.get('/reset-password/done_request', response_class=HTMLResponse, description='Request password reset Page.')  
+@router.get('/reset-password/done_request', response_class=HTMLResponse, description='Request password reset Page.')
 async def reset_password_done(request: Request) -> _TemplateResponse:
     """
     The reset_password_done function is called when the user clicks on the link in their email.
@@ -235,7 +234,7 @@ async def reset_password_done(request: Request) -> _TemplateResponse:
 
 @router.post('/reset-password/confirm/{token}')
 async def reset_password_confirm(
-                                 background_tasks: BackgroundTasks, 
+                                 background_tasks: BackgroundTasks,
                                  request: Request,
                                  token: str,
                                  db: Session = Depends(get_db)
@@ -260,10 +259,10 @@ async def reset_password_confirm(
     if not exist_user:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=messages.MSC503_UNKNOWN_USER)
-    
+
     new_password: str = AuthPassword.get_new_password()
     password: str = AuthPassword.get_hash_password(new_password)
-    
+
     updated_user: User = await repository_users.change_password_for_user(exist_user, password, db)
     if updated_user is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

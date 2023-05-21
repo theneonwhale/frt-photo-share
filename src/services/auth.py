@@ -21,7 +21,6 @@ from src.services.asyncdevlogging import async_logging_to_file
 
 
 class AuthPassword:
-
     @staticmethod
     def get_hash_password(password: str) -> str:
         pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -87,7 +86,7 @@ class AuthToken:
         return token
 
     @classmethod
-    async def get_email_from_token(cls, token: OAuth2PasswordBearer = Depends(oauth2_scheme), token_type: str = None) -> str:
+    async def get_email_from_token(cls, token: str = Depends(oauth2_scheme), token_type: str = None) -> str:
         try:
             payload = jwt.decode(token, AuthToken.SECRET_KEY, algorithms=[AuthToken.ALGORITHM])
             email = payload['sub']
@@ -130,14 +129,18 @@ class AuthUser(AuthToken):
         AuthUser.redis_client.delete(user_email)
 
     @classmethod
-    async def get_current_user(cls, token: str = Depends(AuthToken.oauth2_scheme), db: Session = Depends(get_db)) -> dict:
+    async def get_current_user(
+                               cls,
+                               token: str = Depends(AuthToken.oauth2_scheme),
+                               db: Session = Depends(get_db)
+                               ) -> dict:
         email: str = await AuthToken.get_email_from_token(token, token_type='access_token')
 
         bl_token = AuthUser.redis_client.get(token)
         if bl_token:
             raise AuthUser.credentials_exception
 
-        user: Optional[User] = AuthUser.redis_client.get(email) if AuthUser.redis_client else None
+        user: Optional[dict] = AuthUser.redis_client.get(email) if AuthUser.redis_client else None
         if user is None:
             user: User = await repository_users.get_user_by_email(email, db)
 
@@ -159,7 +162,6 @@ class AuthUser(AuthToken):
             user: User = pickle.loads(user)
 
         if not user.get('status_active'):
-
             await async_logging_to_file(f'\n5XX:\t{datetime.now()}\tUser_status: {user["status_active"]}\t{traceback.extract_stack(None, 2)[1][2]}')
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
 
@@ -169,7 +171,7 @@ class AuthUser(AuthToken):
     async def logout_user(cls, token: str = Depends(AuthToken.oauth2_scheme)) -> dict:
         try:
             payload = jwt.decode(token, AuthUser.SECRET_KEY, AuthUser.ALGORITHM)
-            email = AuthUser.token_check(payload, token_type='access_token')
+            await AuthUser.token_check(payload, token_type='access_token')
 
         except:
             raise AuthUser.credentials_exception

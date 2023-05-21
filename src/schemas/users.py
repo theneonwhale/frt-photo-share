@@ -11,7 +11,6 @@ class UserBase(BaseModel):
 
 
 class UserModel(UserBase):
-    """User model class."""
     username: str = Field(min_length=2, max_length=30)
     email: EmailStr
     password: str = Field(min_length=6, max_length=14)
@@ -22,8 +21,7 @@ class UserType(UserBase):
 
 
 class UserDb(BaseModel):
-    """Class User for DataBase."""
-    id: int  # = 1
+    id: int
     username: str
     email: str
     created_at: datetime
@@ -35,7 +33,6 @@ class UserDb(BaseModel):
 
 
 class UserResponse(BaseModel):
-    """User response class."""
     id: int
     username: str
     email: str
@@ -50,7 +47,6 @@ class UserResponse(BaseModel):
 
 
 class UserResponseFull(UserResponse):
-    """User full-response class."""
     number_images: int = 0
 
 
@@ -64,10 +60,10 @@ class RequestEmail(BaseModel):
     email: EmailStr
 
 
-class PasswordRecovery(BaseModel):  # #
+class PasswordRecovery(BaseModel):
     """To check the sufficiency of the password during the password recovery procedure."""
     password: str = Field(min_length=6, max_length=14)
 
 
-class MessageRequest(BaseModel):
+class MessageResponse(BaseModel):
     message: str = Field(max_length=2000)

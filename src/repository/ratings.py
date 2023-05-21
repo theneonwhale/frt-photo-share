@@ -16,7 +16,7 @@ async def add_rating(
                      db: Session
                      ) -> Rating:
     rating = Rating(
-                    stars=body.rating,
+                    rating=body.rating,
                     user_id=user['id'],
                     image_id=image_id
                     )
@@ -25,16 +25,16 @@ async def add_rating(
     db.refresh(rating)
 
     image = db.query(Image).get(image_id)
-    average_rating = db.query(func.avg(Rating.stars)).filter(Rating.image_id == image_id).scalar()
+    average_rating = db.query(func.avg(Rating.rating)).filter(Rating.image_id == image_id).scalar()
     image.rating = average_rating
 
     db.commit()
     db.refresh(image)
 
-    return rating.stars
+    return rating
 
 
-def get_ratings(
+async def get_ratings(
                 image_id: int,
                 db: Session
                 ) -> List[Rating]:
@@ -47,7 +47,7 @@ async def remove_rating(
                          rating_id: int,
                          user: User,
                          db: Session
-                         ):
+                         ) -> dict:
     rating = db.query(Rating).filter_by(id=rating_id).first()
 
     if rating is None:
@@ -59,7 +59,7 @@ async def remove_rating(
     db.commit()
 
     image = db.query(Image).get(image_id)
-    average_rating = db.query(func.avg(Rating.stars)).filter(Rating.image_id == image_id).scalar()
+    average_rating = db.query(func.avg(Rating.rating)).filter(Rating.image_id == image_id).scalar()
     image.rating = average_rating
 
     db.commit()

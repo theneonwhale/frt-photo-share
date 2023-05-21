@@ -18,7 +18,7 @@ from src.repository import users as repository_users
 from src.schemas.images import ImageModel, ImageResponse, SortDirection
 from src.services.auth import AuthUser, security
 from src.services.images import CloudImage
-from src.services.roles import allowed_all_roles_access, allowed_operation_delete
+from src.services.roles import allowed_all_roles_access, allowed_admin_moderator
 
 
 router = APIRouter(prefix='/images', tags=['images'])
@@ -84,7 +84,7 @@ async def transform_image(
             '/qrcode/{image_id}',
             description=f'No more than {settings.limit_crit} requests per minute',
             dependencies=[
-                           Depends(allowed_operation_delete),
+                           Depends(allowed_admin_moderator),
                            Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                            ]
             )
@@ -230,7 +230,7 @@ async def get_image_by_tag_name(
             '/search_byuser/{user_id}',
             description=f'Get images by user_id.\nNo more than {settings.limit_warn} requests per minute.',
             dependencies=[
-                          Depends(allowed_operation_delete),
+                          Depends(allowed_admin_moderator),
                           Depends(RateLimiter(times=settings.limit_warn, seconds=settings.limit_crit_timer))
                           ],
             response_model=List[ImageResponse]

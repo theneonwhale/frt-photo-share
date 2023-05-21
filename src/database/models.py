@@ -90,7 +90,7 @@ class Rating(Base):
     user = relationship("User", backref='ratings')
     image_id = Column(Integer, ForeignKey('images.id', ondelete='CASCADE'), nullable=True)
     image = relationship("Image", backref='ratings')
-    stars = Column(Integer, CheckConstraint('stars >= 1 AND stars <= 5'))
+    rating = Column(Float, CheckConstraint('rating >= 1 AND rating <= 5'))
     created_at = Column(DateTime, default=func.now())
 
     __table_args__ = (UniqueConstraint('user_id', 'image_id', name='_user_image_uc'),)

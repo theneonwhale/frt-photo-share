@@ -7,6 +7,7 @@ from src.database.models import Tag
 
 async def create_tag(name, db: Session) -> Tag:
     tag = Tag(name=name)
+
     db.add(tag)
     db.commit()
     db.refresh(tag)

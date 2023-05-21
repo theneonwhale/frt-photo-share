@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -11,11 +11,11 @@ from src.schemas.users import UserBase, UserModel, UserType
 from src.conf import messages
 
 
-async def get_user_by_email(email: str, db: Session) -> User:
+async def get_user_by_email(email: str, db: Session) -> Optional[User]:
     return db.query(User).filter(User.email == email).first()
 
 
-async def get_user_by_id(user_id: int, db: Session) -> User:
+async def get_user_by_id(user_id: int, db: Session) -> Optional[User]:
     return db.query(User).filter(User.id == user_id).first()
 
 
@@ -126,11 +126,11 @@ async def update_your_profile(email: str, body_data: UserBase, db: Session) -> O
     return user
 
 
-async def ban_user(user_id: int, active_status: bool, db: Session) -> Optional[User]:
+async def ban_user(user_id: int, active_status: bool, db: Session) -> Type[User] | None:
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return None
-    
+
     if user.roles.value == 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     
