@@ -135,8 +135,8 @@ async def update_comment(
                              Depends(allowed_operation_delete),
                              Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                              ],
-                response_model=CommentResponse,
-                )
+               response_model=CommentResponse,
+               )
 async def remove_comment(
                          comment_id: int = Path(ge=1),
                          db: Session = Depends(get_db),

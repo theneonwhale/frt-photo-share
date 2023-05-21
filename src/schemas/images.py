@@ -16,6 +16,7 @@ class TagModel(BaseModel):
 class ImageModel(BaseModel):
     description: str = Field(max_length=50)
     tags: str
+    rating: float = None
 
 
 class ImageResponse(ImageModel):
@@ -24,6 +25,7 @@ class ImageResponse(ImageModel):
     created_at: datetime
     updated_at: datetime
     tags: List[TagModel]
+    rating: float = None
 
     class Config:
         orm_mode = True
@@ -44,6 +46,18 @@ class CommentModel(BaseModel):
 
 class CommentResponse(CommentModel):
     id: int
+
+    class Config:
+        orm_mode = True
+
+
+class RatingModel(BaseModel):
+    rating: int = Field(ge=1, le=5)
+
+
+class RatingResponse(RatingModel):
+    id: int
+    rating: int = Field(ge=1, le=5)
 
     class Config:
         orm_mode = True
