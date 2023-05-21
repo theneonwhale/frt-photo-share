@@ -52,12 +52,11 @@ class CommentResponse(CommentModel):
 
 
 class RatingModel(BaseModel):
-    rating: int = Field(ge=1, le=5)
+    rating: float = Field(ge=1, le=5)
 
 
 class RatingResponse(RatingModel):
     id: int
-    rating: int = Field(ge=1, le=5)
 
     class Config:
         orm_mode = True

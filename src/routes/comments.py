@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Security, status
 from fastapi_limiter.depends import RateLimiter
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from src.schemas.users import MessageResponse
 
 from src.conf.config import settings
 from src.conf import messages
@@ -13,7 +14,7 @@ from src.repository import images as repository_images
 from src.repository import comments as repository_comments
 from src.schemas.images import CommentModel, CommentResponse
 from src.services.auth import AuthUser, security
-from src.services.roles import allowed_all_roles_access, allowed_operation_delete, allowed_operation_update
+from src.services.roles import allowed_all_roles_access, allowed_admin_moderator, allowed_all_roles_access
 
 
 router = APIRouter(prefix='/comment', tags=['comments'])
@@ -95,7 +96,7 @@ async def add_comment(
             '/{comment_id}',
             description=f'Update comment.\nNo more than {settings.limit_crit} requests per minute.',
             dependencies=[
-                Depends(allowed_operation_update),
+                Depends(allowed_all_roles_access),
                 Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
             ],
             response_model=CommentResponse,
@@ -132,17 +133,17 @@ async def update_comment(
                '/{comment_id}',
                description=f'Delete comment.\nNo more than {settings.limit_crit} requests per minute.',
                dependencies=[
-                             Depends(allowed_operation_delete),
+                             Depends(allowed_admin_moderator),
                              Depends(RateLimiter(times=settings.limit_crit, seconds=settings.limit_crit_timer))
                              ],
-               response_model=CommentResponse,
+               response_model=MessageResponse
                )
 async def remove_comment(
                          comment_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
                          current_user: dict = Depends(AuthUser.get_current_user),
                          credentials: HTTPAuthorizationCredentials = Security(security)
-                         ) -> Optional[Comment]:
+                         ) -> dict:
 
     """
     The remove_comment function removes a comment from the database.
@@ -154,8 +155,6 @@ async def remove_comment(
     :return: A comment object
     :doc-author: Trelent
     """
-    comment = await repository_comments.remove_comment(comment_id, current_user, db)
-    if comment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_COMMENT_NOT_FOUND)
+    message = await repository_comments.remove_comment(comment_id, current_user, db)
 
-    return comment
+    return message

@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import Optional, List
+
+from fastapi import HTTPException, status
 
 from sqlalchemy.orm import Session
 
 from src.database.models import Comment, Image, User
 from src.schemas.images import CommentModel
+from src.conf import messages
 
 
 async def add_comment(
@@ -73,7 +76,7 @@ async def remove_comment(
                          comment_id: int,
                          user: User,
                          db: Session
-                         ) -> Optional[Image]:
+                         ) -> dict:
 
     """
     The remove_comment function removes a comment from the database.
@@ -88,14 +91,17 @@ async def remove_comment(
     :doc-author: Trelent
     """
     comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
-    if comment:
-        db.delete(comment)
-        db.commit()
 
-    return comment
+    if comment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_COMMENT_NOT_FOUND)
+
+    db.delete(comment)
+    db.commit()
+
+    return {'message': messages.COMMENT_DELETED}
 
 
-async def get_comments(image_id, db):
+async def get_comments(image_id, db) -> List[Comment]:
 
     """
     The get_comments function takes in an image_id and a database connection object.
