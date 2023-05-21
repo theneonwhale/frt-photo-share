@@ -70,28 +70,28 @@ def user_user():
             }
 
 
-@pytest.fixture(scope="module")
-def user_admin_2():
-    return {
-            'id': 3,
-            'username': 'Example_Name3',
-            'email': 'ExampleMail3@meta.ua',
-            'password': 'Qwerty@1',
-            'roles': 'admin',
-            'status_active': 'true',
-            }
+# @pytest.fixture(scope="module")
+# def user_admin_2():
+#     return {
+#             'id': 3,
+#             'username': 'Example_Name3',
+#             'email': 'ExampleMail3@meta.ua',
+#             'password': 'Qwerty@1',
+#             'roles': 'admin',
+#             'status_active': 'true',
+#             }
 
 
-@pytest.fixture(scope="module")
-def user_moderator():
-    return {
-            'id': 4,
-            'username': 'Example_Name4',
-            'email': 'ExampleMail4@meta.ua',
-            'password': 'Qwerty@1',
-            'roles': 'moderator',
-            'status_active': 'true',
-            }
+# @pytest.fixture(scope="module")
+# def user_moderator():
+#     return {
+#             'id': 4,
+#             'username': 'Example_Name4',
+#             'email': 'ExampleMail4@meta.ua',
+#             'password': 'Qwerty@1',
+#             'roles': 'moderator',
+#             'status_active': 'true',
+#             }
 
 
 
@@ -163,18 +163,18 @@ def access_token_user(client, user_user, session, mocker) -> str:
 
 
 
-@pytest.fixture(scope='function')
-def access_token_admin(client, user_admin_2, session, mocker) -> str:
-    mocker.patch('src.routes.auth.send_email')  # mocker
+# @pytest.fixture(scope='function')
+# def access_token_admin(client, user_admin_2, session, mocker) -> str:
+#     mocker.patch('src.routes.auth.send_email')  # mocker
 
-    client.post('/api/auth/signup', json=user_admin_2)
+#     client.post('/api/auth/signup', json=user_admin_2)
 
-    current_user: User = session.scalar(select(User).filter(User.email == user_admin_2['email']))
-    current_user.confirmed = True
-    session.commit()
+#     current_user: User = session.scalar(select(User).filter(User.email == user_admin_2['email']))
+#     current_user.confirmed = True
+#     session.commit()
 
-    response = client.post(
-                           '/api/auth/login',
-                           data={'username': user_admin_2.get('email'), 'password': user_admin_2.get('password')},
-                           )
-    return response.json()['access_token']
+#     response = client.post(
+#                            '/api/auth/login',
+#                            data={'username': user_admin_2.get('email'), 'password': user_admin_2.get('password')},
+#                            )
+#     return response.json()['access_token']

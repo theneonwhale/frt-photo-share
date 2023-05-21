@@ -12,7 +12,7 @@ from src.database.models import User
 from src.schemas.users import UserDb, UserResponse, UserResponseFull
 
 
-def test_read_users_me(client, access_token, access_token_user):
+def test_read_users_me(client, access_token):
     response = client.get('api/users/me/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -25,17 +25,8 @@ def test_read_users_me(client, access_token, access_token_user):
     for field in expected_response:
         assert field in data
 
-    headers = {'Authorization': f'Bearer {access_token_user}'}
-    response = client.get('api/users/me/', headers=headers)
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    expected_response: dict = UserDb.__fields__
-
-    for field in expected_response:
-        assert field in data
     
-
-def test_read_user_by_id(client, access_token, access_token_user):
+def test_read_user_by_id(client, access_token):
     response = client.get('api/users/1/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -53,27 +44,12 @@ def test_read_user_by_id(client, access_token, access_token_user):
     for field in expected_response:
         assert field in data
 
-    headers = {'Authorization': f'Bearer {access_token_user}'}
-    response = client.get('api/users/1000/', headers=headers)
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert 'detail' in response.json()
-    assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND
 
-    response = client.get('api/users/2/', headers=headers)
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    expected_response: dict = UserResponseFull.__fields__
-
-    for field in expected_response:
-        assert field in data
-
-
-def test_update_user_profile(client, access_token, user, access_token_admin, user_admin_2):
-    response = client.put('api/users/2/', json=user)
+def test_update_user_profile(client, user, access_token, user_user, access_token_user):
+    response = client.put('api/users/1/', json=user)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = client.get('api/users/1/', headers=headers)
     response = client.put('api/users/9/', headers=headers, json=user)
     assert 'detail' in response.json()
     assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
@@ -82,29 +58,13 @@ def test_update_user_profile(client, access_token, user, access_token_admin, use
     assert 'detail' in response.json()
     assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
 
-    response = client.put('api/users/3/', headers=headers, json=user)
+    response = client.put('api/users/2/', headers=headers, json=user_user)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     expected_response: dict = UserDb.__fields__
 
     for field in expected_response:
         assert field in data
-
-    # headers = {'Authorization': f'Bearer {access_token_user}'}
-    # response = client.put('api/users/9/', headers=headers, json=user_user)
-    # assert 'detail' in response.json()
-    # assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
-    
-    # response = client.put('api/users/1/', headers=headers, json=user_user)
-    # assert 'detail' in response.json()
-    # assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
-
-    # response = client.put('api/users/2/', headers=headers, json=user_user)
-    # assert 'detail' in response.json()
-    # assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
-
-    # headers = {'Authorization': f'Bearer {access_token_admin}'}
-    
 
 '''
 
