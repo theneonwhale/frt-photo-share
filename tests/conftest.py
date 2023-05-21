@@ -49,13 +49,50 @@ def client(session):
 @pytest.fixture(scope="module")
 def user():
     return {
+            'id': 1,
+            'username': 'Example_Name1',
+            'email': 'ExampleMail1@meta.ua',
+            'password': 'Qwerty@1',
+            'roles': 'admin',
+            'status_active': 'true',
+            }
+
+
+@pytest.fixture(scope="module")
+def user_user():
+    return {
             'id': 2,
-            'username': 'Example_Name',
-            'email': 'pwht_12p@meta.ua',
+            'username': 'Example_Name2',
+            'email': 'ExampleMail2@meta.ua',
             'password': 'Qwerty@1',
             'roles': 'user',
             'status_active': 'true',
             }
+
+
+@pytest.fixture(scope="module")
+def user_admin_2():
+    return {
+            'id': 3,
+            'username': 'Example_Name3',
+            'email': 'ExampleMail3@meta.ua',
+            'password': 'Qwerty@1',
+            'roles': 'admin',
+            'status_active': 'true',
+            }
+
+
+@pytest.fixture(scope="module")
+def user_moderator():
+    return {
+            'id': 4,
+            'username': 'Example_Name4',
+            'email': 'ExampleMail4@meta.ua',
+            'password': 'Qwerty@1',
+            'roles': 'moderator',
+            'status_active': 'true',
+            }
+
 
 
 @pytest.fixture(scope="module")
@@ -83,28 +120,11 @@ def token(client, user, session, monkeypatch):
     return {"access_token": data["access_token"], "refresh_token": data['refresh_token'], "token_type": "bearer"}
 
 
-@pytest.fixture(scope="module")
-def user_admin():
-    return {
-            'id': 1,
-            'username': 'Example_Name',
-            'email': 'test_email@ukr.com',
-            'password': 'Qwerty@1',
-            'roles': 'admin',
-            'status_active': 'true',
-            }
-
-
-@pytest.fixture(scope="module")
-def user_moderator():
-    return {
-            'id': 3,
-            'username': 'Example_Name',
-            'email': 'test_email@ukr.com',
-            'password': 'Qwerty@1',
-            'roles': 'moderator',
-            'status_active': 'true',
-            }
+# @pytest.fixture(scope="module")
+# def user_type():
+#     return {
+#             'roles': 'admin',
+#             }
 
 
 @pytest.fixture(scope='function')
@@ -120,5 +140,41 @@ def access_token(client, user, session, mocker) -> str:
     response = client.post(
                            '/api/auth/login',
                            data={'username': user.get('email'), 'password': user.get('password')},
+                           )
+    return response.json()['access_token']
+
+
+@pytest.fixture(scope='function')
+def access_token_user(client, user_user, session, mocker) -> str:
+    mocker.patch('src.routes.auth.send_email')  # mocker
+
+    client.post('/api/auth/signup', json=user_user)
+
+    current_user: User = session.scalar(select(User).filter(User.email == user_user['email']))
+    current_user.confirmed = True
+    session.commit()
+
+    response = client.post(
+                           '/api/auth/login',
+                           data={'username': user_user.get('email'), 'password': user_user.get('password')},
+                           )
+    return response.json()['access_token']
+
+
+
+
+@pytest.fixture(scope='function')
+def access_token_admin(client, user_admin_2, session, mocker) -> str:
+    mocker.patch('src.routes.auth.send_email')  # mocker
+
+    client.post('/api/auth/signup', json=user_admin_2)
+
+    current_user: User = session.scalar(select(User).filter(User.email == user_admin_2['email']))
+    current_user.confirmed = True
+    session.commit()
+
+    response = client.post(
+                           '/api/auth/login',
+                           data={'username': user_admin_2.get('email'), 'password': user_admin_2.get('password')},
                            )
     return response.json()['access_token']

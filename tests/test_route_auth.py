@@ -1,22 +1,23 @@
 
 import asyncio
+from unittest.mock import MagicMock, AsyncMock
 
 from fastapi import status
-from src.schemas.users import UserResponse
-from src.services.auth import AuthToken
-from unittest.mock import MagicMock, AsyncMock
 
 from src.conf import messages as m
 from src.database.models import User
+from src.schemas.users import UserResponse
+from src.services.auth import AuthToken
+
+
+mock_send_email = MagicMock()
+mock_send_reset_password = AsyncMock()
 
 
 def test_signup_ok(client, user, monkeypatch):
-    mock_send_email = MagicMock()
-    # create mock for function where it`s call
-    # not src.services.email, from import in route.auth
     monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)  
     response = client.post('api/auth/signup', json=user)
-    assert response.status_code == 201, response.text  # status.HTTP_201_CREATED
+    assert response.status_code == 201, response.text
     data = response.json()
     expected_response: dict = UserResponse.__fields__
 
@@ -27,15 +28,14 @@ def test_signup_ok(client, user, monkeypatch):
     assert data['detail'] == m.MSC201_USER_CREATED
 
 
-def test_signup_fail(client, user):  # , mocker
-    # mocker.patch('src.routes.auth.send_email')  # !- background_tasks not execute
+def test_signup_fail(client, user): 
     response = client.post('api/auth/signup', json=user)
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json()['detail'] == m.MSC409_CONFLICT
 
 
 def test_login_ok(client, session, user):
-    current_user: User = session.query(User).filter(User.email == user.get('email')).first()  # contact
+    current_user: User = session.query(User).filter(User.email == user.get('email')).first()
     current_user.confirmed = True
     session.commit()
 
@@ -43,7 +43,7 @@ def test_login_ok(client, session, user):
     data = response.json()
 
     assert response.status_code == status.HTTP_200_OK
-    assert data['token_type'] == m.TOKEN_TYPE  # 'Bearer' 
+    assert data['token_type'] == m.TOKEN_TYPE
 
 
 def test_logout(client, access_token):
@@ -117,7 +117,8 @@ def test_request_confirm_email_ok(client, session, user):
     assert response.json()['message'] == m.EMAIL_ERROR_CONFIRMED
 
 
-def test_request_confirm_email_check(client, session, user):  # , monkeypatch is redundant
+def test_request_confirm_email_check(client, session, user, monkeypatch):  # , monkeypatch is redundant ?
+    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()
     current_user.confirmed = False
     session.commit()
@@ -188,12 +189,14 @@ def test_confirmed_email_fail(client, session, user):  # split into several?
     assert response.json()['detail'] == m.MSC400_BAD_REQUEST
 
 
-def test_reset_password_ok(client, session, user):
+def test_reset_password_ok(client, session, user, monkeypatch):
+    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)
+    monkeypatch.setattr('src.routes.auth.send_reset_password', mock_send_reset_password)
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()
     current_user.confirmed = True
     session.commit()
 
-    response = client.post('api/auth/reset-password', json={'email': user.get('email')})
+    response = client.post('api/auth/reset-password', json={'email': user.get('email')})  
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()['message'] == m.MSG_SENT_PASSWORD
@@ -226,10 +229,8 @@ def test_reset_password_done(client):
 
 
 def test_reset_password_confirm_ok(client, session, user, monkeypatch):
-    mock_send_email = MagicMock()
-    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email) 
-    mock_send_new_password = MagicMock()
-    monkeypatch.setattr('src.routes.auth.send_new_password', mock_send_new_password) 
+    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)
+    monkeypatch.setattr('src.routes.auth.send_new_password', mock_send_reset_password) 
 
 
     current_user: User = session.query(User).filter(User.email == user.get('email')).first()

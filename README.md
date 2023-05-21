@@ -49,6 +49,9 @@ make html
 
 pytest tests/test_root.py -v
 pytest tests/test_route_auth.py -v
+pytest tests/test_route_auth2.py -v
 pytest tests/test_route_users.py -v
+pytest tests/test_routes_comments.py -v
+pytest tests/test_unit_repository_comments.py -v
 
 # -------------------
