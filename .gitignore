@@ -8,3 +8,4 @@ logs/
 postgres-data/
 .coverage
 test.db
+docs/_build/
