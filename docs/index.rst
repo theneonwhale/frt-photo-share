@@ -35,7 +35,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share DB Connection
+frt-photo-share DB Connection
 ===============================
 .. automodule:: src.database.db
   :members:
@@ -43,7 +43,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share Models
+frt-photo-share Models
 ========================
 .. automodule:: src.database.models
   :members:
@@ -51,7 +51,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share repository Comments
+frt-photo-share repository Comments
 =====================================
 .. automodule:: src.repository.comments
   :members:
@@ -59,15 +59,21 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share repository Images
+frt-photo-share repository Images
 ===================================
 .. automodule:: src.repository.images
   :members:
   :undoc-members:
   :show-inheritance:
 
+frt-photo-share repository Ratings
+===================================
+.. automodule:: src.repository.ratings
+  :members:
+  :undoc-members:
+  :show-inheritance:
 
-  frt-photo-share repository Tags
+frt-photo-share repository Tags
 =================================
 .. automodule:: src.repository.tags
   :members:
@@ -75,7 +81,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share repository Users
+frt-photo-share repository Users
 ==================================
 .. automodule:: src.repository.users
   :members:
@@ -83,7 +89,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share routes Auth
+frt-photo-share routes Auth
 =============================
 .. automodule:: src.routes.auth
   :members:
@@ -91,7 +97,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share routes Comments
+frt-photo-share routes Comments
 =================================
 .. automodule:: src.routes.comments
   :members:
@@ -99,15 +105,22 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share routes Images
+frt-photo-share routes Images
 ===============================
 .. automodule:: src.routes.images
   :members:
   :undoc-members:
   :show-inheritance:
 
+frt-photo-share routes Ratings
+===============================
+.. automodule:: src.routes.ratings
+  :members:
+  :undoc-members:
+  :show-inheritance:
 
-  frt-photo-share routes Users
+
+frt-photo-share routes Users
 ==============================
 .. automodule:: src.routes.users
   :members:
@@ -115,7 +128,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share schemas Images
+frt-photo-share schemas Images
 ================================
 .. automodule:: src.schemas.images
   :members:
@@ -123,7 +136,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share schemas Users
+frt-photo-share schemas Users
 ===============================
 .. automodule:: src.schemas.users
   :members:
@@ -131,7 +144,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share services Asyncdevlogging
+frt-photo-share services Asyncdevlogging
 ==========================================
 .. automodule:: src.services.asyncdevlogging
   :members:
@@ -139,7 +152,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-  frt-photo-share services Auth
+frt-photo-share services Auth
 ===============================
 .. automodule:: src.services.auth
   :members:
@@ -147,7 +160,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-    frt-photo-share services Email
+frt-photo-share services Email
 ==================================
 .. automodule:: src.services.email
   :members:
@@ -155,7 +168,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-    frt-photo-share services Images
+frt-photo-share services Images
 ===================================
 .. automodule:: src.services.images
   :members:
@@ -163,7 +176,7 @@ frt-photo-share Messages
   :show-inheritance:
 
 
-    frt-photo-share services Roles
+frt-photo-share services Roles
 ==================================
 .. automodule:: src.services.roles
   :members:

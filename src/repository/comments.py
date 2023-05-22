@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 from sqlalchemy.orm import Session
 
-from src.database.models import Comment, Image, User
+from src.database.models import Comment, User
 from src.schemas.images import CommentModel
 from src.conf import messages
 
@@ -17,9 +17,13 @@ async def add_comment(
         ) -> Optional[Comment]:
     """
     The add_comment function creates a new comment for an image.
+    Args:
+    body (CommentModel): The CommentModel object containing the comment to be added.
+    image_id (int): The id of the image that is being commented on.
+    user (dict): A dictionary containing information about the user who is adding a comment, including their id and username.
 
     :param body: CommentModel: Get the comment from the request body
-    :param image_id: int: Get the image id from the database
+    :param image_id: int: Get the image id from the url
     :param user: dict: Get the user id from the token
     :param db: Session: Access the database
     :return: A comment object
@@ -38,26 +42,25 @@ async def add_comment(
 
 
 async def update_comment(
-                         comment_id: int,
-                         body: CommentModel,
-                         user: dict,
-                         db: Session,
-                         ) -> Optional[Image]:
-
+        comment_id: int,
+        body: CommentModel,
+        user: dict,
+        db: Session,
+        ) -> Optional[Comment]:
     """
     The update_comment function updates a comment in the database.
     Args:
     comment_id (int): The id of the comment to update.
-    body (CommentModel): The updated Comment object to be stored in the database.
+    body (CommentModel): The updated Comment object with new values for its attributes.
     This is passed as JSON from the client and converted into a CommentModel object by Pydantic's BaseModel class.
-    See models/comment for more information on how this works, or visit https://pydantic-docs.helpmanual.io/.
+    See models/comment_model for more information on how this works, or visit https://pydantic-docs.helpmanual.io/.
 
     :param comment_id: int: Identify the comment to be deleted
     :param body: CommentModel: Get the comment from the request body
-    :param user: dict: Get the user id from the jwt token
+    :param user: dict: Check if the user is authorized to delete a comment
     :param db: Session: Access the database
-    :param : Determine which comment to delete
-    :return: A comment object
+    :param : Get the comment id
+    :return: The updated comment
     :doc-author: Trelent
     """
     comment: Comment = db.query(Comment).filter_by(id=comment_id, user_id=user['id']).first()
@@ -73,21 +76,17 @@ async def update_comment(
 
 
 async def remove_comment(
-                         comment_id: int,
-                         user: User,
-                         db: Session
-                         ) -> dict:
-
+        comment_id: int,
+        user: User,
+        db: Session
+    ) -> dict:
     """
-    The remove_comment function removes a comment from the database.
-    Args:
-    comment_id (int): The id of the comment to be removed.
-    user (User): The user who is removing the image.  This is used for authorization purposes only, and not stored in any way by this function or its helpers.
+    The remove_comment function deletes a comment from the database.
 
-    :param comment_id: int: Find the comment in the database
-    :param user: User: Check if the user is logged in
+    :param comment_id: int: Specify the id of the comment that is to be deleted
+    :param user: User: Check if the user is authorized to delete a comment
     :param db: Session: Access the database
-    :return: A comment object
+    :return: A dictionary with a message that the comment has been deleted
     :doc-author: Trelent
     """
     comment: Comment = db.query(Comment).filter_by(id=comment_id).first()
@@ -102,14 +101,13 @@ async def remove_comment(
 
 
 async def get_comments(image_id, db) -> List[Comment]:
-
     """
-    The get_comments function takes in an image_id and a database connection object.
-    It then queries the Comment table for all comments with the given image_id, and returns them as a list.
+    The get_comments function takes in an image_id and a database connection,
+    and returns all comments associated with the given image_id.
 
     :param image_id: Filter the comments by image_id
-    :param db: Access the database
-    :return: All comments for a given image
+    :param db: Query the database for comments that are associated with a specific image
+    :return: All comments associated with a particular image
     :doc-author: Trelent
     """
     return db.query(Comment).filter_by(image_id=image_id).all()

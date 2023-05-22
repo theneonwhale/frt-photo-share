@@ -1,14 +1,13 @@
 from unittest.mock import MagicMock
 
 import pytest
-from sqlalchemy import select
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from main import app
-from src.database.db import get_db
 from src.database.models import Base, Role, User
+from src.database.db import get_db
 
 
 SQLALCHEMY_DATABASE_URL = 'sqlite:///./test.db'
@@ -17,12 +16,14 @@ engine = create_engine(
                        SQLALCHEMY_DATABASE_URL, 
                        connect_args={'check_same_thread': False}
                       )
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope='module')
 def session():
     # Create the database
+
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
@@ -45,6 +46,7 @@ def client(session):
 
     yield TestClient(app)
 
+    
 @pytest.fixture(scope='module')
 def admin():
     return {
@@ -73,7 +75,12 @@ def user():
 def comment():
     return {'comment': 'Test comment', 'image_id': '1'}
 
+  
+@pytest.fixture(scope="module")
+def image():
+    return {"description": "Test image", "tags": "test tag"}
 
+  
 @pytest.fixture
 def admin_token(client, admin, session, monkeypatch):
     mock_send_email = MagicMock()
