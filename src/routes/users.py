@@ -95,7 +95,7 @@ async def update_user_profile(
 @router.put('/me/{user_id}', response_model=UserDb)
 async def update_your_profile(
                               user_id: int,
-                              body: UserBase,
+                              body: Optional[UserBase] = None,
                               current_user: dict = Depends(AuthUser.get_current_user),
                               credentials: HTTPAuthorizationCredentials = Security(security),
                               db: Session = Depends(get_db)
@@ -151,7 +151,7 @@ async def update_avatar_user(
 
 
 @router.patch(
-              '/ban_user', response_model=UserDb,
+              '/ban_user/{user_id}/{active_status}', response_model=UserDb,
               dependencies=[Depends(allowed_admin_moderator)],
               description='Ban/unban user'
               )
@@ -159,6 +159,7 @@ async def ban_user(
                    user_id: int,
                    active_status: bool,
                    current_user: dict = Depends(AuthUser.get_current_user),
+                   credentials: HTTPAuthorizationCredentials = Security(security),
                    db: Session = Depends(get_db)
                    ) -> User:
     """
@@ -173,7 +174,7 @@ async def ban_user(
     """
     user: Optional[User] = await repository_users.ban_user(user_id, active_status, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
 
     await AuthUser.clear_user_cash(user.email)
 

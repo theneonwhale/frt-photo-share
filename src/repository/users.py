@@ -73,42 +73,47 @@ async def get_number_of_images_per_user(email: str, db: Session) -> int:
 
 
 async def update_user_profile(user_id: int, current_user: dict, body_data: UserType, db: Session) -> Optional[User]:
+    body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
     user: User = await get_user_by_id(user_id, db)
-    if not user:
+    # if not user or not body_data.get('roles') or current_user['roles'] != Role.admin:  # current_user['roles'] != 'admin'
+    #     print(f'1{current_user=}')
+    #     return None
+    if not user:  # current_user['roles'] != 'admin'
+        print(f'1{current_user=}')
         return None
     
-    db_obj_data: Optional[dict] = user.__dict__
-    body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
+    if not body_data.get('roles'):  # current_user['roles'] != 'admin'
+        print(f'2{current_user=}')
+        return None
+    
+    if current_user['roles'] != Role.admin:  # current_user['roles'] != 'admin'
+        print(f'3{current_user=}')
+        return None
+    
     if (
-        user_id == current_user['id'] and 
-        body_data['roles'] != 'admin' and 
-        not db.query(User).filter(User.roles == Role.admin)
+        current_user['roles'] == Role.admin and  #'admin' and  # Role.admin and
+        user_id != current_user['id']
         ):
-        body_data.pop('roles')
-
-    else:
         role_mapping = {
                         'admin': Role.admin,
                         'moderator': Role.moderator,
                         'user': Role.user
                         }
         body_data['roles'] = role_mapping.get(body_data['roles'].lower(), Role.user)
+        setattr(user, 'roles', body_data['roles'])
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    for field in db_obj_data:
-        if field in body_data:
-            setattr(user, field, body_data[field])
-            
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    return user
+        return user
+    print(current_user)
+    return None
 
 
 async def update_your_profile(email: str, body_data: UserBase, db: Session) -> Optional[User]:
     user: User = await get_user_by_email(email, db)
     if not user:
-        return None
+        return None  # raise 500?
     
     db_obj_data: Optional[dict] = user.__dict__
     body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
@@ -130,7 +135,7 @@ async def ban_user(user_id: int, active_status: bool, db: Session) -> Type[User]
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return None
-
+   
     if user.roles.value == 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     
