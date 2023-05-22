@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from main import app
@@ -76,16 +76,16 @@ def comment():
     return {'comment': 'Test comment', 'image_id': '1'}
 
   
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def image():
-    return {"description": "Test image", "tags": "test tag"}
+    return {'description': 'Test image', 'tags': 'test tag'}
 
   
 @pytest.fixture
 def admin_token(client, admin, session, monkeypatch):
     mock_send_email = MagicMock()
-    monkeypatch.setattr("src.routes.auth.send_email", mock_send_email)
-    client.post("/api/auth/signup", json=admin)
+    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)
+    client.post('/api/auth/signup', json=admin)
 
     current_user: User = session.query(User).filter_by(email=admin.get('email')).first()
     current_user.id = 1
@@ -94,19 +94,19 @@ def admin_token(client, admin, session, monkeypatch):
     session.commit()
 
     response = client.post(
-        "/api/auth/login",
-        data={"username": admin.get('email'), "password": admin.get('password')},
+        '/api/auth/login',
+        data={'username': admin.get('email'), 'password': admin.get('password')},
     )
     data = response.json()
-    # return data["access_token"]
-    return {"access_token": data["access_token"], "refresh_token": data['refresh_token'], "token_type": "bearer"}
+    # return data['access_token']
+    return {'access_token': data['access_token'], 'refresh_token': data['refresh_token'], 'token_type': 'bearer'}
 
 
 @pytest.fixture
 def user_token(client, user, session, monkeypatch):
     mock_send_email = MagicMock()
-    monkeypatch.setattr("src.routes.auth.send_email", mock_send_email)
-    client.post("/api/auth/signup", json=user)
+    monkeypatch.setattr('src.routes.auth.send_email', mock_send_email)
+    client.post('/api/auth/signup', json=user)
 
     current_user: User = session.query(User).filter_by(email=user.get('email')).first()
     current_user.id = 2
@@ -115,12 +115,12 @@ def user_token(client, user, session, monkeypatch):
     session.commit()
 
     response = client.post(
-        "/api/auth/login",
-        data={"username": user.get('email'), "password": user.get('password')},
+        '/api/auth/login',
+        data={'username': user.get('email'), 'password': user.get('password')},
     )
     data = response.json()
-    # return data["access_token"]
-    return {"access_token": data["access_token"], "refresh_token": data['refresh_token'], "token_type": "bearer"}
+    # return data['access_token']
+    return {'access_token': data['access_token'], 'refresh_token': data['refresh_token'], 'token_type': 'bearer'}
 
 
 @pytest.fixture(scope='function')

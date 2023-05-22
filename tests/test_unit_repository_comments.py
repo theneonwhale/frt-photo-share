@@ -54,7 +54,7 @@ class TestComments(unittest.IsolatedAsyncioTestCase):
 
     async def test_update_comment(self):
         comment_id = 1
-        body = CommentModel(comment="Updated comment")
+        body = CommentModel(comment='Updated comment')
         expected_comment = Comment(comment=body.comment, user_id=self.user['id'], image_id=None)
 
         self.session.query.return_value.filter_by.return_value.first.return_value = expected_comment
@@ -68,8 +68,6 @@ class TestComments(unittest.IsolatedAsyncioTestCase):
         self.session.query.return_value.filter_by.assert_called_once_with(id=comment_id, user_id=self.user['id'])
         self.session.commit.assert_called_once()
         self.session.refresh.assert_called_once_with(expected_comment)
-
-
 
 
 if __name__ == '__main__':
