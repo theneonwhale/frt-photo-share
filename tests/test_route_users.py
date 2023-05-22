@@ -1,7 +1,7 @@
 from fastapi import status
 
-import pytest
-from sqlalchemy import select
+# import pytest
+# from sqlalchemy import select
 
 from src.conf import messages
 from src.schemas.users import UserDb, UserResponseFull

@@ -25,12 +25,12 @@ def test_add_comment(client, session, user_token, user, comment, monkeypatch):
         monkeypatch.setattr('fastapi_limiter.FastAPILimiter.http_callback', AsyncMock())
 
         mock_image = AsyncMock()
-        monkeypatch.setattr("src.repository.images.get_image", mock_image)
+        monkeypatch.setattr('src.repository.images.get_image', mock_image)
 
         response = client.post(
-            f"/api/comment/{comment['image_id']}",
+            f'''/api/comment/{comment['image_id']}''',
             json={'comment': 'Test comment'},
-            headers={'Authorization': f'Bearer {user_token["access_token"]}'}
+            headers={'Authorization': f'''Bearer {user_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 200, response.text
@@ -46,11 +46,11 @@ def test_get_comments_by_image_id(client, session, user_token, user, comment, mo
         monkeypatch.setattr('fastapi_limiter.FastAPILimiter.http_callback', AsyncMock())
 
         mock_image = AsyncMock()
-        monkeypatch.setattr("src.repository.images.get_image", mock_image)
+        monkeypatch.setattr('src.repository.images.get_image', mock_image)
 
         response = client.get(
-            f"/api/comment/{comment['image_id']}",
-            headers={'Authorization': f'Bearer {user_token["access_token"]}'}
+            f'''/api/comment/{comment['image_id']}''',
+            headers={'Authorization': f'''Bearer {user_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 200, response.text
@@ -68,9 +68,9 @@ def test_update_comment(client, session, user_token, user, comment, monkeypatch)
         user = session.query(User).filter_by(email=user.get('email')).first()
         test_comment = session.query(Comment).filter_by(user_id=user.id).first()
         response = client.put(
-            "/api/comment/1",
+            '/api/comment/1',
             json={'comment': 'New comment'},
-            headers={'Authorization': f'Bearer {user_token["access_token"]}'}
+            headers={'Authorization': f'''Bearer {user_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 200, response.text
@@ -91,8 +91,8 @@ def test_remove_comment_by_user(client, session, user_token, user, comment, monk
         user = session.query(User).filter_by(email=user.get('email')).first()
         test_comment = session.query(Comment).filter_by(user_id=user.id).first()
         response = client.delete(
-            f"/api/comment/{test_comment.id}",
-            headers={'Authorization': f'Bearer {user_token["access_token"]}'}
+            f'/api/comment/{test_comment.id}',
+            headers={'Authorization': f'''Bearer {user_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 403, response.text
@@ -109,8 +109,8 @@ def test_remove_comment_by_admin(client, session, admin_token, user, comment, mo
         user = session.query(User).filter_by(email=user.get('email')).first()
         test_comment = session.query(Comment).filter_by(user_id=user.id).first()
         response = client.delete(
-            f"/api/comment/{test_comment.id}",
-            headers={'Authorization': f'Bearer {admin_token["access_token"]}'}
+            f'/api/comment/{test_comment.id}',
+            headers={'Authorization': f'''Bearer {admin_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 200, response.text
@@ -128,9 +128,9 @@ def test_update_comment_not_found(client, session, user_token, user, comment, mo
 
         # user = session.query(User).fiomment).filter_by(user_id=comment['user_id']).first()
         response = client.put(
-            "/api/comment/999",
+            '/api/comment/999',
             json={'comment': 'New comment'},
-            headers={'Authorization': f'Bearer {user_token["access_token"]}'}
+            headers={'Authorization': f'''Bearer {user_token['access_token']}'''}
         )
         data = response.json()
         assert response.status_code == 404, response.text
@@ -144,7 +144,7 @@ def test_remove_comment_not_found(client, session, admin_token, user, comment, m
         monkeypatch.setattr('fastapi_limiter.FastAPILimiter.http_callback', AsyncMock())
 
         response = client.delete(
-            "/api/comment/9999",
-            headers={'Authorization': f'Bearer {admin_token["access_token"]}'}
+            '/api/comment/9999',
+            headers={'Authorization': f'''Bearer {admin_token['access_token']}'''}
         )
         assert response.status_code == 404, response.text
