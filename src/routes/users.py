@@ -174,7 +174,7 @@ async def ban_user(
     """
     user: Optional[User] = await repository_users.ban_user(user_id, active_status, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.MSC404_USER_NOT_FOUND)
 
     await AuthUser.clear_user_cash(user.email)
 

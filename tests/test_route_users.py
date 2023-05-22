@@ -1,15 +1,10 @@
-from pprint import pprint
-
 from fastapi import status
 
 import pytest
-# import requests
 from sqlalchemy import select
-# from unittest.mock import Mock, patch
 
 from src.conf import messages
-from src.database.models import User
-from src.schemas.users import UserBase, UserDb, UserResponse, UserResponseFull
+from src.schemas.users import UserDb, UserResponseFull
 
 
 def test_read_users_me(client, access_token):
@@ -45,7 +40,7 @@ def test_read_user_by_id(client, access_token):
         assert field in data
 
 
-def test_update_user_profile(client, user, access_token, user_user, access_token_user):
+def test_update_user_profile(client, user, access_token, user_user, access_token_user):  # ! need
     response = client.put('api/users/1/', json=user)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -67,13 +62,12 @@ def test_update_user_profile(client, user, access_token, user_user, access_token
         assert field in data
 
 
-
-def test_update_your_profile(client, user, access_token, user_user, access_token_user):
+def test_update_your_profile(client, user, access_token, user_user, access_token_user):  # ! need
     response = client.put('api/users/me/1/', json=user)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = client.put('api/users/me/1/', headers=headers)  # , json={}
+    response = client.put('api/users/me/1/', headers=headers)
     assert 'detail' in response.json()
     assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
 
@@ -84,10 +78,8 @@ def test_update_your_profile(client, user, access_token, user_user, access_token
 
     for field in expected_response:
         assert field in data
-
-
-
-# ----------------------------
+ 
+ 
 def test_update_avatar_user(client, user, access_token, mocker):
     mock_avatar = 'https://pypi.org/static/images/logo-small.2a411bc6.svg'
     mocker.patch('src.routes.users.CloudImage.avatar_upload', return_value=mock_avatar)
@@ -110,25 +102,19 @@ def test_update_avatar_user(client, user, access_token, mocker):
     
 
 def test_ban_user(client, access_token, user):
-    # body = {'user_id': 1, 'active_status': True}
-    response = client.patch('api/users/ban_user/1/true')  # , json=body)
+    response = client.patch('api/users/ban_user/1/true')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    headers = {'Authorization': f'Bearer {access_token}'}  #: , user_id=1000, active_status=True
-    # body['user_id'] = 1000
+    headers = {'Authorization': f'Bearer {access_token}'}
     response = client.patch('api/users/ban_user/999/true', headers=headers)
-    print(f'--------------- {response.json()}')  # user_id=1 ???
     assert 'detail' in response.json()
     assert response.json()['detail'] == messages.MSC404_USER_NOT_FOUND 
 
-    headers = {'Authorization': f'Bearer {access_token}'}
-    # body['user_id'] = 1
     response = client.patch('api/users/ban_user/1/true', headers=headers)
     assert 'detail' in response.json()
     assert response.json()['detail'] == messages.MSC403_USER_BANNED 
 
-    # body['user_id'] = 3
-    response = client.patch('api/users/ban_user', headers=headers)
+    response = client.patch('api/users/ban_user/2/false', headers=headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     expected_response: dict = UserDb.__fields__
