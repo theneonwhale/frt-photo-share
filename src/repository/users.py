@@ -135,7 +135,7 @@ async def ban_user(user_id: int, active_status: bool, db: Session) -> Type[User]
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return None
-    print(f'\t----------- = {user_id}')
+   
     if user.roles.value == 'admin':
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.MSC403_USER_BANNED)
     
