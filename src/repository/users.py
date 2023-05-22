@@ -6,7 +6,6 @@ from libgravatar import Gravatar
 from sqlalchemy.orm import Session
 
 from src.database.models import Image, Role, User
-
 from src.schemas.users import UserBase, UserModel, UserType
 from src.conf import messages
 
@@ -29,8 +28,7 @@ async def create_user(body: UserModel, db: Session) -> User:
         print(e)
 
     new_user: User = User(**body.dict(), avatar=avatar)
-    if not db.query(User).first():
-        new_user.roles = Role.admin
+    new_user.roles = Role.admin if not db.query(User).first() else Role.user
 
     db.add(new_user)
     db.commit()

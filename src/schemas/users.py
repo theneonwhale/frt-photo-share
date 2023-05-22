@@ -11,8 +11,6 @@ class UserBase(BaseModel):
 
 
 class UserModel(UserBase):
-    username: str = Field(min_length=2, max_length=30)
-    email: EmailStr
     password: str = Field(min_length=6, max_length=14)
 
 
