@@ -1,14 +1,12 @@
-import asyncio
 from datetime import datetime
+from fastapi import HTTPException
 import unittest
 from unittest.mock import MagicMock
-from fastapi import HTTPException
 
-from fastapi_pagination import Page, Params
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
-from src.database.models import Image, Role, User
+from src.database.models import Role, User
 from src.repository.users import (
                                   get_user_by_email,
                                   get_user_by_id,
@@ -22,16 +20,24 @@ from src.repository.users import (
                                   update_your_profile,
                                   ban_user,
                                   )
-from src.schemas.users import UserModel
+from src.schemas.users import UserBase, UserModel, UserType
 
 class TestUsers(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         """Start before all test."""
-        # cls.TEST_RANGE = 12
         cls.password = 'new_passw0rd'
         cls.email = 'Unknown2@mail.com'
         cls.user_id = 3
+        cls.role = UserType(
+                            username='NewName',
+                            email=EmailStr('Unknown3@mail.com'),
+                            roles='moderator'
+                            )
+        cls.body_base = UserBase(
+                                 username='NewName', 
+                                 email=EmailStr('NewEMail@mail.com')
+                                 )
         cls.body_user_model = UserModel(
                                         username='Unknown2', 
                                         email=EmailStr('Unknown2@mail.com'),
@@ -58,24 +64,24 @@ class TestUsers(unittest.IsolatedAsyncioTestCase):
                         created_at=datetime.now(),
                         updated_at=datetime.now(),
                         avatar='non-standard',
-                        refresh_token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwd2h0XzEycEBtZXRhLnVhIiwiaWF0IjoxNjg0MzQyMjE5LCJleHAiOjE2ODQ5NDcwMTksInNjb3BlIjoicmVmcmVzaF90b2tlbiJ9.a0bJYSpQ8u-0aCxqdTcfqPcVDPURPS37Ns5pX-iV1MI',
+                        refresh_token='ey.....37Ns5pX-iV1MI',
                         roles=Role.user,
                         confirmed=False,
                         status_active=True
                         )
 
-    @classmethod
-    def tearDownClass(cls):
-        """Start after all test."""
-        ...
+    # @classmethod
+    # def tearDownClass(cls):
+    #     """Start after all test."""
+    #     ...
 
     def setUp(self):
         """Start before each test."""
         self.session = MagicMock(spec=Session)
 
-    def tearDown(self):
-        """Start after each test."""
-        ...
+    # def tearDown(self):
+    #     """Start after each test."""
+    #     ...
 
     async def test_get_user_by_email_found(self):
         self.session.query().filter().first.return_value = TestUsers.user
@@ -87,7 +93,7 @@ class TestUsers(unittest.IsolatedAsyncioTestCase):
 
     async def test_get_user_by_email_not_found(self):
         self.session.query().filter().first.return_value = None
-        result = await get_user_by_email(email=self.email, db=self.session)  # self.email ==TestUsers.email
+        result = await get_user_by_email(email=self.email, db=self.session)  # self.email === TestUsers.email
         self.assertIsNone(result)
     
     async def test_get_user_by_id_found(self):
@@ -156,16 +162,71 @@ class TestUsers(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, 17)
     
     async def test_update_user_profile_success(self):
-        return
+        self.session.query().filter().first.return_value = TestUsers.user
+        result: User = await update_user_profile(
+                                                 user_id=TestUsers.user.id, 
+                                                 current_user=TestUsers.admin.__dict__,
+                                                 body_data=self.role,
+                                                 db=self.session
+                                                 )
+        [self.assertTrue(hasattr(result, el)) for el in TestUsers.user.__dict__]
+        self.assertEqual(result.roles, TestUsers.user.roles)
+        self.assertEqual(self.role.roles, TestUsers.user.roles.value)
     
-    async def test_update_user_profile_fail(self):
-        return
+    async def test_update_user_profile_fails(self):
+        self.session.query().filter().first.return_value = None
+        result: None = await update_user_profile(
+                                                 user_id=TestUsers.user.id, 
+                                                 current_user=TestUsers.admin.__dict__,
+                                                 body_data=self.role,
+                                                 db=self.session
+                                                 )
+        self.assertIsNone(result)
+
+        self.session.query().filter().first.return_value = TestUsers.user
+        result: User = await update_user_profile(
+                                                 user_id=TestUsers.user.id, 
+                                                 current_user=TestUsers.admin.__dict__,
+                                                 body_data=None,
+                                                 db=self.session
+                                                 )
+        self.assertIsNone(result)
+
+        self.session.query().filter().first.return_value = TestUsers.user
+        result: User = await update_user_profile(
+                                                 user_id=TestUsers.user.id, 
+                                                 current_user=TestUsers.user.__dict__,
+                                                 body_data=self.role,
+                                                 db=self.session
+                                                 )
+        self.assertIsNone(result)
+
+        self.session.query().filter().first.return_value = TestUsers.admin
+        result: User = await update_user_profile(
+                                                 user_id=TestUsers.admin.id, 
+                                                 current_user=TestUsers.admin.__dict__,
+                                                 body_data=self.role,
+                                                 db=self.session
+                                                 )
+        self.assertIsNone(result)
 
     async def test_update_your_profile_success(self):
-        return
+        self.session.query().filter().first.return_value = TestUsers.admin
+        result: User = await update_your_profile(
+                                                 email=TestUsers.admin.email, 
+                                                 body_data=self.body_base, 
+                                                 db=self.session
+                                                 )
+        [self.assertTrue(hasattr(result, el)) for el in TestUsers.admin.__dict__]
+        [self.assertEqual(result.__dict__[el], self.body_base.__dict__[el]) for el in self.body_base.__dict__]
     
     async def test_update_your_profile_fail(self):
-        return
+        self.session.query().filter().first.return_value = None
+        result = await update_your_profile(email=TestUsers.admin.email, body_data=self.body_base, db=self.session)
+        self.assertIsNone(result)
+        self.session.query().filter().first.return_value = TestUsers.admin
+        result = await update_your_profile(email=TestUsers.admin.email, body_data=None, db=self.session)
+        self.assertIsNone(result)
     
     async def test_ban_user_success(self):
         self.assertEqual(self.user.status_active, True)

@@ -71,25 +71,20 @@ async def get_number_of_images_per_user(email: str, db: Session) -> int:
 
 
 async def update_user_profile(user_id: int, current_user: dict, body_data: UserType, db: Session) -> Optional[User]:
-    body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else None
+    body_data: Optional[dict] = jsonable_encoder(body_data) if body_data else {}
     user: User = await get_user_by_id(user_id, db)
-    # if not user or not body_data.get('roles') or current_user['roles'] != Role.admin:  # current_user['roles'] != 'admin'
-    #     print(f'1{current_user=}')
-    #     return None
-    if not user:  # current_user['roles'] != 'admin'
-        print(f'1{current_user=}')
+
+    if not user:
         return None
     
-    if not body_data.get('roles'):  # current_user['roles'] != 'admin'
-        print(f'2{current_user=}')
+    if not body_data.get('roles'):
         return None
     
-    if current_user['roles'] != Role.admin:  # current_user['roles'] != 'admin'
-        print(f'3{current_user=}')
+    if current_user['roles'] != Role.admin:
         return None
     
     if (
-        current_user['roles'] == Role.admin and  #'admin' and  # Role.admin and
+        current_user['roles'] == Role.admin and
         user_id != current_user['id']
         ):
         role_mapping = {
@@ -104,7 +99,7 @@ async def update_user_profile(user_id: int, current_user: dict, body_data: UserT
         db.refresh(user)
 
         return user
-    print(current_user)
+    
     return None
 
 
