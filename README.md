@@ -1,56 +1,43 @@
-## photo-share
+#Prerequisites
+Before you begin, ensure that you have the following prerequisites installed on your system:
 
-# alembic init migrations
+- Python 3.10 or higher
+- Poetry
 
-# migrations/env.py ... set
+#Installation
+1. Clone the project repository:
+```
+git clone <repository_url>
+```
 
-# alembic revision --autogenerate -m 'Init'
+2. Navigate to the project directory:
+```
+cd <project_directory>
+```
+3. Install the project dependencies using Poetry:
+```
+poetry install
+```
+Poetry will create a virtual environment and install the required packages specified in the pyproject.toml file.
 
-# alembic upgrade head
+#Launching
+To launch the development server and start the FastAPI project, follow these steps:
 
-# ---
+1. Activate the project's virtual environment:
+```
+poetry shell
+```
+2. Run the following command to start the development server:
+```
+uvicorn main:app --reload
+```
+- ```main``` refers to the name of the main file where your FastAPI app instance is created.
+- ```--reload``` enables auto-reloading of the server whenever code changes are detected (useful during development).
+3. Once the server has started, you should see output similar to the following:
 
-packages: https://github.com/uriyyo/fastapi-pagination https://pypi.org/project/python-redis-rate-limit/
+```
+INFO: Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+Open your web browser and navigate to http://127.0.0.1:8000 to access the API.
 
-# ---
-
-# logging:
-
-'''
-
-# from datetime import datetime
-
-# import traceback
-
-# from src.services.asyncdevlogging import async_logging_to_file
-
-# await async_logging_to_file(f'\n500:\t{datetime.now()}\t{MSC500_DATABASE_CONNECT}\t{traceback.extract_stack(None, 2)[1][2]}')
-
-'''
-
-# ---
-
-# http://0.0.0.0:8000
-
-# http://0.0.0.0:8000/docs#
-
-# http://0.0.0.0:8000/api/healthchecker
-
-# ---
-
-## pagination != "^0.12.3" !!! need poetry update
-
-# ----
-
-.\make.bat html
-make html
-
-# ----
-
-pytest tests/test_root.py -v
-pytest tests/test_route_auth.py -v
-pytest tests/test_route_users.py -v
-pytest tests/test_routes_comments.py -v
-pytest tests/test_unit_repository_comments.py -v
-
-# -------------------
+4. Swager documentation could be found here: http://127.0.0.1:8000/docs
