@@ -1,10 +1,12 @@
-#Prerequisites
+# Photo share app
+
+## Prerequisites
 Before you begin, ensure that you have the following prerequisites installed on your system:
 
 - Python 3.10 or higher
 - Poetry
 
-#Installation
+## Installation
 1. Clone the project repository:
 ```
 git clone <repository_url>
@@ -20,7 +22,7 @@ poetry install
 ```
 Poetry will create a virtual environment and install the required packages specified in the pyproject.toml file.
 
-#Launching
+## Launching
 To launch the development server and start the FastAPI project, follow these steps:
 
 1. Activate the project's virtual environment:
@@ -42,7 +44,7 @@ Open your web browser and navigate to http://127.0.0.1:8000 to access the API.
 
 4. Swager documentation could be found here: http://127.0.0.1:8000/docs
 
-#Application features
+## Application features
 - Authentication using JWT tokens, LogIn-LogOut mechanism.
 - Three basic user roles (admin, user, moderator).
 - Ability to view, download, delete photos.
