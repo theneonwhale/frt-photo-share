@@ -1,4 +1,5 @@
 # Photo share app
+Introducing a robust application that offers a secure and interactive platform for photo sharing. With features like JWT token-based authentication, three distinct user roles, and the ability to manage photos by viewing, downloading, and deleting them, users can easily organize their visual memories. Moreover, users can enhance their photos, add tags and descriptions, generate QR codes for easy sharing, engage in comments and ratings, while admins and moderators maintain control over user interactions and ratings.
 
 ## Prerequisites
 Before you begin, ensure that you have the following prerequisites installed on your system:
@@ -59,3 +60,13 @@ Open your web browser and navigate to http://127.0.0.1:8000 to access the API.
 - The admin can make users inactive (ban) - users will not be able to enter the application.
 - Users can give a rating to a photo from 1 to 5. The rating is calculated as the average of the ratings of all users. You can rate a photo only once for a user. You cannot rate your own photos.
 - Admins and moderators can view and delete user ratings.
+
+### Used technologies
+
+### Developers - Fast Rabbit Team
+- [Andrii Kylymnyk](https://github.com/theneonwhale)
+- [Denys Tantsiura](https://github.com/DenysTantsiura)
+- [Anton Holovin](https://github.com/Unfeir)
+
+#### License
+This project is licensed under the MIT License.
