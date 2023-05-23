@@ -13,7 +13,7 @@ redis
 fastapi-limiter
 cloudinary
 httpx
-fastapi-pagination
+fastapi-pagination==0.11.4
 aiofile
 aiopath
 qrcode
