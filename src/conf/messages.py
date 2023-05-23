@@ -35,5 +35,6 @@ MSG_PASSWORD_RESET = 'Complete password reset.'
 MSG_SENT_PASSWORD = 'Password-change email has been sent.'
 MSC500_SENDING_EMAIL = 'can`t send a letter.'
 RATING_DELETED = 'Rating deleted.'
+OWN_RATING = "Can't rate own image."
 COMMENT_DELETED = 'Comment deleted.'
 IMAGE_DELETED = 'Image deleted.'

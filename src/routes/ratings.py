@@ -44,6 +44,9 @@ async def add_rating(
     if existing_rating:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages.MSC400_ALREADY_RATED)
 
+    if image.user_id == current_user['id']:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages.OWN_RATING)
+
     rating = await repository_ratings.add_rating(body, image_id, current_user, db)
     return rating
 
