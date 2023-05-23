@@ -41,3 +41,19 @@ INFO: Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 Open your web browser and navigate to http://127.0.0.1:8000 to access the API.
 
 4. Swager documentation could be found here: http://127.0.0.1:8000/docs
+
+#Application features
+- Authentication using JWT tokens, LogIn-LogOut mechanism.
+- Three basic user roles (admin, user, moderator).
+- Ability to view, download, delete photos.
+- Ability to add up to 5 tags to a photo.
+- Ability to edit the description of the photo.
+- Ability to modify photos (Cloudinary service).
+- Ability to create a link to the photo in the form of a QR code.
+- Users can comment on each other's photos, edit their own comments.
+- Admins and moderators can delete comments.
+- View user profile - information about the user. Name, when registered, number of uploaded photos.
+- Users can edit information about themselves and see information about themselves.
+- The admin can make users inactive (ban) - users will not be able to enter the application.
+- Users can give a rating to a photo from 1 to 5. The rating is calculated as the average of the ratings of all users. You can rate a photo only once for a user. You cannot rate your own photos.
+- Admins and moderators can view and delete user ratings.
