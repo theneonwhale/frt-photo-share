@@ -1,4 +1,7 @@
 # Photo share app
+[![MIT License](https://img.shields.io/badge/license-MIT-green)](https://github.com/theneonwhale/frt-photo-share/blob/main/LICENSE.md)
+![Version](https://img.shields.io/badge/version-v0.1.0-green)
+--
 Introducing a robust application that offers a secure and interactive platform for photo sharing. With features like JWT token-based authentication, three distinct user roles, and the ability to manage photos by viewing, downloading, and deleting them, users can easily organize their visual memories. Moreover, users can enhance their photos, add tags and descriptions, generate QR codes for easy sharing, engage in comments and ratings, while admins and moderators maintain control over user interactions and ratings.
 
 ## Prerequisites
@@ -62,6 +65,31 @@ Open your web browser and navigate to http://127.0.0.1:8000 to access the API.
 - Admins and moderators can view and delete user ratings.
 
 ### Used technologies
+- Python (programming language)
+- FastAPI (web framework)
+- Uvicorn (ASGI server)
+- SQLAlchemy (database toolkit)
+- Alembic (database migration tool)
+- Pydantic (data validation and parsing)
+- Jinja2 (template engine)
+- python-multipart (support for multipart/form-data)
+- python-jose (JSON Web Tokens implementation)
+- Passlib (password hashing)
+- libgravatar (Gravatar integration)
+- fastapi-mail (email sending in FastAPI)
+- Redis (in-memory data structure store)
+- fastapi-limiter (request rate limiting)
+- cloudinary (cloud-based image and video management)
+- httpx (HTTP client)
+- pytest (testing framework)
+- fastapi-pagination (pagination support for FastAPI)
+- aiofile (asyncio file operations)
+- aiopath (asyncio file path manipulation)
+- qrcode (QR code generation)
+- psycopg2-binary (PostgreSQL database adapter)
+- pytest-mock (pytest extension for mocking)
+- Sphinx (documentation generator)
+- pytest-cov (coverage reporting for pytest)
 
 ### Developers - Fast Rabbit Team
 - [Andrii Kylymnyk](https://github.com/theneonwhale)
