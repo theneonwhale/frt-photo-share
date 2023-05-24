@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     cloudinary_api_key: int = 1
     cloudinary_api_secret: str = 'secret'
     limit_crit: int = 12
-    limit_warn: int = 2
+    limit_warn: int = 10
     tags_limit: int = 5
     limit_crit_timer: int = 60 # seconds
     access_token_timer: int = 1 # hours
